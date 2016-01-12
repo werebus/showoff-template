@@ -1,0 +1,31 @@
+.content {
+  color: white;
+  background: #333;
+}
+
+.content a,
+.content a:hover,
+.content a:visited,
+.content a:active {
+  color: #71b2c9;
+}
+
+#preso, .slide {
+  background: #333;
+}
+
+.bg-left {
+  height: 100%;
+  width: 30%;
+  background: #881c1c;
+}
+
+.bg-right {
+  height: 100%;
+  width: 70%;
+  background: #333;
+}
+
+.bullets li {
+  margin-left: 0;
+}

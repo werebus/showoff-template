@@ -1,0 +1,10 @@
+{ "name": ""
+, "author": "Matt Moretti"
+, "templates":
+  { "default": "default.tpl"
+  }
+, "sections": 
+  [ { "section": "intro" }
+  , { "section": "conclusion" }
+  ]
+}
