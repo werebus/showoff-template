@@ -1,10 +1,31 @@
-Presentation on Git and GitHub at UMass Transportation Services.
+Presentation Template
+=====================
+This repository contains a blank [showoff][showoff] presentation to use as a
+template.
 
-This presentation is designed to use [showoff][showoff], and can be run
-as follows (presuming ruby and bundler):
+Instalation
+-----------
+*  Clone this repository: `git clone https://github.com/this/repo`
+*  Create a new reposiory on Github for your presentation
+*  Update your clone to use your newly created repo: `git remote set-url
+   origin your_push_url`
+*  `bundle install`
+
+Adding slides
+-------------
+Add a slide like so:
 
 ```bash
-$ bundle install
+$ bundle exec showoff add -d directory_name -n slide_name
+```
+
+Adding a new section (`directory_name`) will also modify `showoff.json`
+
+Running your presentation
+-------------------------
+This presentation can be run as follows:
+
+```bash
 $ bundle exec showoff serve
 ```
 
