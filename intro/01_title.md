@@ -1,5 +1,5 @@
 <!SLIDE center>
 
-# Title #
+# ~~~CONFIG:name~~~ #
 
-## Subtitle ##
+## ~~~CONFIG:venue~~~ ##
