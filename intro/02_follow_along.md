@@ -1,7 +1,7 @@
 <!SLIDE>
 # Follow along: #
 
-http://example.com/
+[~~~CONFIG:url~~~](~~~CONFIG:url~~~)
 
 Press `?` for hotkeys
 

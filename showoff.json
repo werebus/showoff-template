@@ -1,5 +1,8 @@
 { "name": ""
 , "author": "Matt Moretti"
+, "url": "http://example.com/"
+, "email": "moretti@admin.umass.edu"
+, "github": "werebus"
 , "templates":
   { "default": "default.tpl"
   }
