@@ -1,6 +1,18 @@
-.content {
-  color: white;
+#preso, .slide {
   background: #333;
+}
+
+.slide::before {
+  background: #881c1c;
+  content: "";
+  display: block;
+  height: 100%;
+  width: 20%;
+  position: absolute;
+}
+
+.content {
+  color: #eee;
 }
 
 .content a,
@@ -10,22 +22,6 @@
   color: #71b2c9;
 }
 
-#preso, .slide {
-  background: #333;
-}
-
-.bg-left {
-  height: 100%;
-  width: 30%;
-  background: #881c1c;
-}
-
-.bg-right {
-  height: 100%;
-  width: 70%;
-  background: #333;
-}
-
-.bullets li {
+.content.bullets > ul > li {
   margin-left: 0;
 }
