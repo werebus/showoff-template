@@ -1,3 +1,7 @@
+body {
+  background: #222;
+}
+
 #preso, .slide {
   background: #333;
 }
@@ -22,6 +26,21 @@
   color: #71b2c9;
 }
 
-.content.bullets > ul > li {
+.bullets > .content > ul {
+  list-style: none;
+  padding-left: 0px;
+}
+.bullets > .content > ul > li {
+  text-align: center;
+  padding: 25px;
   margin-left: 0;
+}
+
+.smbullets > .content > ul > li {
+  text-align: center;
+  padding: 10px;
+}
+
+.bullets > .content ul ul > li { 
+  font-size: 80%;
 }

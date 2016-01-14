@@ -1,3 +1,10 @@
-<div class="bg-left"></div>
-<div class="bg-right"></div>
+<div class="content content-wrapper">
+
 ~~~CONTENT~~~
+
+</div>
+<div class="slide-footer">
+
+Some Footer Content
+
+</div>
