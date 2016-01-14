@@ -11,6 +11,7 @@ GEM
     gli (2.13.4)
     htmlentities (4.3.4)
     json (1.8.3)
+    kramdown (1.9.0)
     mini_portile2 (2.0.0)
     nokogiri (1.6.7.1)
       mini_portile2 (~> 2.0.0.rc2)
@@ -48,6 +49,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  kramdown (~> 1.9.0)
   showoff (~> 0.11.2)
 
 BUNDLED WITH

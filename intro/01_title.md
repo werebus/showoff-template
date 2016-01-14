@@ -2,4 +2,4 @@
 
 # ~~~CONFIG:name~~~ #
 
-## ~~~CONFIG:venue~~~ ##
+## ~~~CONFIG:description~~~ ##
