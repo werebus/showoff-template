@@ -1,2 +1,5 @@
 require "showoff"
-run ShowOff.new
+class MyPresentation < ShowOff
+  set :nocache, true
+end
+run MyPresentation.new

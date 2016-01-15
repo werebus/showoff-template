@@ -7,7 +7,7 @@ GEM
     em-websocket (0.3.8)
       addressable (>= 2.1.1)
       eventmachine (>= 0.12.9)
-    eventmachine (1.0.8)
+    eventmachine (1.0.9.1)
     excon (0.45.4)
     gli (2.13.4)
     heroku (3.42.29)
