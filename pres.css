@@ -15,6 +15,15 @@ body {
   position: absolute;
 }
 
+.slide-footer {
+  background: #000;
+  color: #eee;
+  height: 2em;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+}
+
 .content {
   color: #eee;
 }
@@ -26,21 +35,14 @@ body {
   color: #71b2c9;
 }
 
-.bullets > .content > ul {
-  list-style: none;
-  padding-left: 0px;
-}
-.bullets > .content > ul > li {
-  text-align: center;
-  padding: 25px;
+.content.bullets > ul > li {
   margin-left: 0;
 }
 
-.smbullets > .content > ul > li {
-  text-align: center;
-  padding: 10px;
-}
-
-.bullets > .content ul ul > li { 
-  font-size: 80%;
+.visuallyhidden {
+  position: absolute;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  height: 1px; width: 1px;
+  margin: -1px; padding: 0; border: 0;
 }
