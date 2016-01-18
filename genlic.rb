@@ -2,7 +2,7 @@ require 'json'
 require 'erubis'
 
 showoff_json = JSON.parse(File.read('showoff.json'))
-sections = showoff_json['sections'].map{ |s| s.values.first }
+sections = showoff_json['sections'].map { |s| s.values.first }
 other_dirs = ['_preshow']
 preso_dirs = (sections + other_dirs).sort
 
