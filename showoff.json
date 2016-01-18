@@ -13,4 +13,7 @@
   ]
 , "version": "0.11.2"
 , "markdown": "kramdown"
+, "kramdown":
+  { "auto_id_prefix": "h-"
+  }
 }
