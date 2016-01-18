@@ -1,3 +1,4 @@
+#!/usr/sbin/env ruby
 require 'json'
 require 'erubis'
 

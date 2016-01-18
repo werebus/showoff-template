@@ -7,6 +7,7 @@ GEM
     em-websocket (0.3.8)
       addressable (>= 2.1.1)
       eventmachine (>= 0.12.9)
+    erubis (2.7.0)
     eventmachine (1.0.9.1)
     excon (0.45.4)
     gli (2.13.4)
@@ -75,6 +76,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
+  erubis
   heroku
   kramdown (~> 1.9.0)
   showoff (~> 0.11.2)
