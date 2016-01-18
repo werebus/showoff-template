@@ -30,7 +30,7 @@ Running your presentation
 This presentation can be run as follows:
 
 ```bash
-$ bundle exec showoff serve
+$ bundle exec rackup
 ```
 
 Publishing on GitHub
@@ -46,12 +46,33 @@ $ git push origin gh-pages
 Running on Heroku
 -----------------
 Assuming that you have a [heroku][heroku] account and are logged-in to
-the cli, you just need to create an app and push
+the cli, you just need to create an app and push.
 
 ```bash
 $ heroku create
 $ git push heroku
 ```
+
+Password-protected presenter view
+---------------------------------
+If you'd like to put a password in front of the presenter view, just
+sent the environment variable, `PASSWORD`. On Heroku, that's done like
+so:
+
+```bash
+$ heroku config:set PASSWORD=somepassword
+```
+
+but any method of setting an environment variable will do the trick.
+Locally, that can be as simple as
+
+```bash
+$ PASSWORD=somepassword bundle exec rackup
+```
+
+Note that this is HTTP basic authentication, and likely not over SSL, so it's
+not true security. It will probably keep your audience from screwing
+with you, though.
 
 [showoff]: https://github.com/puppetlabs/showoff
 [gh-pages]: https://pages.github.com/

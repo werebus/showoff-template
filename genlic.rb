@@ -1,9 +1,29 @@
-Copyright (c) 2016 Matt Moretti
+require 'json'
+require 'erubis'
+
+showoff_json = JSON.parse(File.read('showoff.json'))
+sections = showoff_json['sections'].map{ |s| s.values.first }
+other_dirs = ['_preshow']
+preso_dirs = (sections + other_dirs).sort
+
+template = Erubis::Eruby.new(DATA.read)
+locals = { preso_dirs: preso_dirs,
+           year: Time.now.year,
+           author: showoff_json['author']
+         }
+
+outfile = File.new('LICENSE', 'w')
+outfile.write(template.result(locals))
+outfile.close
+
+__END__
+Copyright (c) <%= year -%> <%= author -%>
+
 The presentation content in this repository, files in the following directories:
 
-*  `_preshow`
-*  `conclusion`
-*  `intro`
+<% preso_dirs.each do |dir| %>
+*  `<%= dir -%>`
+<% end %>
 
 is licensed under the Creative Commons Attribution-NonCommercial 4.0
 International License. To view a copy of this license, visit
