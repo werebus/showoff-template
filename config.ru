@@ -1,5 +1,14 @@
 require "showoff"
-class MyPresentation < ShowOff
-  set :nocache, true
+
+pres = ShowOff.new
+password = ENV['PASSWORD']
+
+if password
+  pres.settings.showoff_config.merge!({
+    'protected' => ['presenter'],
+    'password' => password
+  })
 end
-run MyPresentation.new
+
+pres.settings.set :nocache, true
+run pres
