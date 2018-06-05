@@ -20,7 +20,8 @@ outfile.close
 __END__
 Copyright (c) <%= year -%> <%= author -%>
 
-The presentation content in this repository, files in the following directories:
+The presentation content in this repository — files in the following
+directories:
 
 <% preso_dirs.each do |dir| %>
 *  `<%= dir -%>`
@@ -30,8 +31,8 @@ is licensed under the Creative Commons Attribution-NonCommercial 4.0
 International License. To view a copy of this license, visit
 http://creativecommons.org/licenses/by-nc/4.0/.
 
-Software in this repository, all other files, is licensed under the MIT License.
-See below.
+Software in this repository — all other files — is licensed under the MIT
+License. See below.
 
 MIT License
 ==============================================================================

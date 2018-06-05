@@ -2,7 +2,7 @@
 , "description": "_"
 , "author": "Matt Moretti"
 , "url": "#"
-, "email": "moretti@admin.umass.edu"
+, "email": "mmoretti@umass.edu"
 , "github": "werebus"
 , "templates":
   { "default": "default.tpl"
