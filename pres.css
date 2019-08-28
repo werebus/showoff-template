@@ -6,6 +6,14 @@ body {
   background: #333;
 }
 
+.content {
+  color: #eee;
+  padding: 1em;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
 .slide::before {
   background: #881c1c;
   content: "";
@@ -13,6 +21,13 @@ body {
   height: 100%;
   width: 20%;
   position: absolute;
+}
+
+.content a,
+.content a:hover,
+.content a:visited,
+.content a:active {
+  color: #71b2c9;
 }
 
 .slide-footer {
@@ -24,25 +39,26 @@ body {
   bottom: 0;
 }
 
-.content {
-  color: #eee;
-}
-
-.content a,
-.content a:hover,
-.content a:visited,
-.content a:active {
-  color: #71b2c9;
-}
-
-.content.bullets > ul > li {
-  margin-left: 0;
-}
-
 .visuallyhidden {
   position: absolute;
   overflow: hidden;
   clip: rect(0 0 0 0);
   height: 1px; width: 1px;
   margin: -1px; padding: 0; border: 0;
+}
+
+.content:not(.cover) h1:not(.section_title) {
+  border-bottom: 3px solid #eee;
+}
+
+.content.center:not(.cover) h1:not(.section_title) {
+  border-bottom: none;
+}
+
+.content > :not(:first-child) {
+  margin-left: 205px;
+}
+
+.content.center > * {
+  margin-left: 0;
 }

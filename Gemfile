@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
-ruby '2.5.1'
+ruby IO.read(File.expand_path('.ruby-version', __dir__)).strip
 
-gem 'showoff', '~> 0.11.2'
+gem 'showoff', '~> 0.14.0'
 gem 'kramdown', '~> 1.9'
 gem 'erubis', group: :development, require: false
