@@ -10,5 +10,6 @@ if password
   )
 end
 
-pres.settings.set :nocache, true
+pres.settings.set :url, nil
+pres.settings.set :nocache, false
 run pres
