@@ -18,7 +18,7 @@ GEM
       mini_portile2 (~> 2.4.0)
     parslet (1.8.2)
     public_suffix (3.1.1)
-    rack (1.6.11)
+    rack (1.6.12)
     rack-protection (1.5.5)
       rack
     redcarpet (3.5.0)
