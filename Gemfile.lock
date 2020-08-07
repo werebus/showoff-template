@@ -12,7 +12,8 @@ GEM
     gli (2.18.2)
     htmlentities (4.3.4)
     json (2.2.0)
-    kramdown (1.17.0)
+    kramdown (2.3.0)
+      rexml
     mini_portile2 (2.4.0)
     nokogiri (1.10.8)
       mini_portile2 (~> 2.4.0)
@@ -22,6 +23,7 @@ GEM
     rack-protection (1.5.5)
       rack
     redcarpet (3.5.0)
+    rexml (3.2.4)
     showoff (0.14.3)
       gli (>= 1.3.2)
       htmlentities
@@ -52,7 +54,7 @@ PLATFORMS
 
 DEPENDENCIES
   erubis
-  kramdown (~> 1.9)
+  kramdown (~> 2.3)
   showoff (~> 0.14.0)
 
 RUBY VERSION
