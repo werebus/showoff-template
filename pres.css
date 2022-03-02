@@ -59,3 +59,7 @@ ul li {
 .content:not(.cover) h1:not(.section_title) {
   border-bottom: 2px solid var(--primary);
 }
+
+#timerSection {
+  display: none;
+}
