@@ -3,7 +3,7 @@
 
 [~~~CONFIG:url~~~](~~~CONFIG:url~~~)
 
-Press `?` for hotkeys
+Press <kbd>?</kbd> for hotkeys
 
 ~~~SECTION:notes~~~
 This presentation in written with [showoff][showoff] and served via
