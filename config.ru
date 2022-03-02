@@ -1,4 +1,5 @@
 require 'showoff'
+require 'showoff/version'
 
 pres = ShowOff.new
 password = ENV['PASSWORD']

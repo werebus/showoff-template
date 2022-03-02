@@ -24,7 +24,7 @@ GEM
     rack-protection (1.5.5)
       rack
     redcarpet (3.5.1)
-    showoff (0.14.3)
+    showoff (0.15.4)
       gli (>= 1.3.2)
       htmlentities
       json
@@ -55,7 +55,7 @@ PLATFORMS
 DEPENDENCIES
   erubis
   kramdown (~> 1.9)
-  showoff (~> 0.14.0)
+  showoff (~> 0.15.0)
 
 RUBY VERSION
    ruby 2.6.9p207
