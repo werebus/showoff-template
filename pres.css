@@ -1,9 +1,61 @@
 @import url('vendor/pico-css/css/pico.min.css');
 
+:root {
+  --primary-h: 0;
+  --primary-s: 66%;
+  --primary-l: 32%;
+}
+
+/* Light theme (default) */
+[data-theme="light"],
+:root:not([data-theme="dark"]) {
+  --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  --primary-hover: hsl(var(--primary-h),
+                       calc(var(--primary-s) * 0.7),
+                       calc(var(--primary-l) * 0.8));
+  --primary-focus: hsla(var(--primary-h),
+                        var(--primary-s),
+                        var(--primary-l),
+                        0.125);
+  --primary-inverse: #FFF;
+}
+
+/* Dark theme (auto) */
+@media only screen and (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+    --primary-hover: hsl(var(--primary-h),
+                         var(--primary-s),
+                         calc(var(--primary-l) * 1.2));
+    --primary-focus: hsla(var(--primary-h),
+                          var(--primary-s),
+                          var(--primary-l),
+                          0.25);
+    --primary-inverse: #FFF;
+  }
+}
+
+/* Dark theme (forced) */
+[data-theme="dark"] {
+  --primary: hsl(var(--primary-h), var(--primary-s), var(--primary-l));
+  --primary-hover: hsl(var(--primary-h),
+                       var(--primary-s),
+                       calc(var(--primary-l) * 1.2));
+  --primary-focus: hsla(var(--primary-h),
+                        var(--primary-s),
+                        var(--primary-l),
+                        0.25);
+  --primary-inverse: #FFF;
+}
+
 ul li {
   list-style: inherit;
 }
 
 #preso, .slide {
   background-color: var(--background-color);
+}
+
+.content:not(.cover) h1:not(.section_title) {
+  border-bottom: 2px solid var(--primary);
 }
