@@ -1,0 +1,9 @@
+@import url('vendor/pico-css/css/pico.min.css');
+
+ul li {
+  list-style: inherit;
+}
+
+#preso, .slide {
+  background-color: var(--background-color);
+}
