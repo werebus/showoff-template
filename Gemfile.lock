@@ -56,6 +56,7 @@ DEPENDENCIES
   erubis
   kramdown (~> 1.9)
   showoff (~> 0.15.0)
+  thin
 
 RUBY VERSION
    ruby 2.6.9p207
