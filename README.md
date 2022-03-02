@@ -21,9 +21,8 @@ $ bundle exec showoff add --dir directory_name --name slide_name
 ```
 
 Adding a new section (`directory_name`) will also modify `showoff.json`,
-but probably in an undesirable way. Probably best to 
-`git checkout -- showoff.json` and then add the new section to
-`showoff.json` yourself.
+but probably in an undesirable way. Probably best to `git restore showoff.json`
+and then add the new section to `showoff.json` yourself.
 
 Running your presentation
 -------------------------
