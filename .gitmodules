@@ -1,0 +1,3 @@
+[submodule "vendor/pico-css"]
+	path = vendor/pico-css
+	url = https://github.com/picocss/pico.git
