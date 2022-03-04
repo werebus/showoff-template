@@ -1,16 +1,13 @@
 require 'showoff'
 require 'showoff/version'
 
-pres = ShowOff.new
-password = ENV['PASSWORD']
+pres = Showoff.new
 
-if password
+if (password = ENV['PASSWORD'])
   pres.settings.showoff_config.merge!(
     'protected' => ['presenter'],
     'password' => password
   )
 end
 
-pres.settings.set :url, nil
-pres.settings.set :nocache, false
 run pres
