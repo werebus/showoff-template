@@ -21,6 +21,7 @@
                         var(--primary-l),
                         0.125);
   --primary-inverse: #FFF;
+
   --secondary: hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l));
   --secondary-hover: hsl(var(--secondary-h),
                        calc(var(--secondary-s) * 0.7),
@@ -44,6 +45,7 @@
                           var(--primary-l),
                           0.25);
     --primary-inverse: #FFF;
+
     --secondary: hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l));
     --secondary-hover: hsl(var(--secondary-h),
                          var(--secondary-s),
@@ -67,15 +69,16 @@
                         var(--primary-l),
                         0.25);
   --primary-inverse: #FFF;
-    --secondary: hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l));
-    --secondary-hover: hsl(var(--secondary-h),
-                         var(--secondary-s),
-                         calc(var(--secondary-l) * 1.1));
-    --secondary-focus: hsla(var(--secondary-h),
-                          var(--secondary-s),
-                          var(--secondary-l),
-                          0.25);
-    --secondary-inverse: #222;
+
+  --secondary: hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l));
+  --secondary-hover: hsl(var(--secondary-h),
+                       var(--secondary-s),
+                       calc(var(--secondary-l) * 1.1));
+  --secondary-focus: hsla(var(--secondary-h),
+                        var(--secondary-s),
+                        var(--secondary-l),
+                        0.25);
+  --secondary-inverse: #222;
 }
 
 ul li {
