@@ -3,6 +3,6 @@
 
 *  ~~~CONFIG:author~~~
 *  ~~~CONFIG:email~~~
-*  <i class="fa fa-github-square"></i> &nbsp; [@~~~CONFIG:github~~~][gh]
+*  <i class="fab fa-github-square"></i> &nbsp; [@~~~CONFIG:github~~~][gh]
 
 [gh]: https://github.com/~~~CONFIG:github~~~
