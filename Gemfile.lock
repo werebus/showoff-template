@@ -3,8 +3,7 @@ GEM
   specs:
     addressable (2.8.0)
       public_suffix (>= 2.0.2, < 5.0)
-    commonmarker (0.14.4)
-      ruby-enum (= 0.5.0)
+    commonmarker (0.23.4)
     concurrent-ruby (1.1.9)
     daemons (1.4.1)
     em-websocket (0.3.8)
@@ -35,10 +34,8 @@ GEM
       rack
     redcarpet (3.5.1)
     ruby-dbus (0.14.1)
-    ruby-enum (0.5.0)
-      i18n
-    showoff (0.18.2)
-      commonmarker (<= 0.14.4)
+    showoff (0.19.6)
+      commonmarker
       fidget (>= 0.0.3)
       gli (>= 2.0)
       htmlentities
@@ -73,7 +70,7 @@ PLATFORMS
 DEPENDENCIES
   erubis
   kramdown (~> 1.9)
-  showoff (~> 0.18.0)
+  showoff (~> 0.19.0)
   thin
 
 RUBY VERSION
