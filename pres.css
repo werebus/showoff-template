@@ -82,7 +82,7 @@ ul li {
   list-style: inherit;
 }
 
-#preso, .slide, #notes-pane #notes {
+#preso, .slide, #notes-pane #notes, body.presenter #presenterPopup {
   background-color: var(--background-color);
 }
 
