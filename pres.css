@@ -4,6 +4,9 @@
   --primary-h: 0;
   --primary-s: 66%;
   --primary-l: 32%;
+  --secondary-h: 30;
+  --secondary-s: 10%;
+  --secondary-l: 64%
 }
 
 /* Light theme (default) */
@@ -18,6 +21,15 @@
                         var(--primary-l),
                         0.125);
   --primary-inverse: #FFF;
+  --secondary: hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l));
+  --secondary-hover: hsl(var(--secondary-h),
+                       calc(var(--secondary-s) * 0.7),
+                       calc(var(--secondary-l) * 0.8));
+  --secondary-focus: hsla(var(--secondary-h),
+                        var(--secondary-s),
+                        var(--secondary-l),
+                        0.125);
+  --secondary-inverse: #222;
 }
 
 /* Dark theme (auto) */
@@ -32,6 +44,15 @@
                           var(--primary-l),
                           0.25);
     --primary-inverse: #FFF;
+    --secondary: hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l));
+    --secondary-hover: hsl(var(--secondary-h),
+                         var(--secondary-s),
+                         calc(var(--secondary-l) * 1.1));
+    --secondary-focus: hsla(var(--secondary-h),
+                          var(--secondary-s),
+                          var(--secondary-l),
+                          0.25);
+    --secondary-inverse: #222;
   }
 }
 
@@ -46,6 +67,15 @@
                         var(--primary-l),
                         0.25);
   --primary-inverse: #FFF;
+    --secondary: hsl(var(--secondary-h), var(--secondary-s), var(--secondary-l));
+    --secondary-hover: hsl(var(--secondary-h),
+                         var(--secondary-s),
+                         calc(var(--secondary-l) * 1.1));
+    --secondary-focus: hsla(var(--secondary-h),
+                          var(--secondary-s),
+                          var(--secondary-l),
+                          0.25);
+    --secondary-inverse: #222;
 }
 
 ul li {
