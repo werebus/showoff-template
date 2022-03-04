@@ -82,7 +82,7 @@ ul li {
   list-style: inherit;
 }
 
-#preso, .slide {
+#preso, .slide, #notes-pane #notes {
   background-color: var(--background-color);
 }
 
@@ -92,4 +92,8 @@ ul li {
 
 #timerSection {
   display: none;
+}
+
+#help-modal {
+  font-size: 0.7em;
 }
