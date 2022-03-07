@@ -20,9 +20,9 @@ Add a slide like so:
 $ bundle exec showoff add --dir directory_name --name slide_name
 ```
 
-Adding a new section (`directory_name`) will also modify `showoff.json`,
-but probably in an undesirable way. Probably best to `git restore showoff.json`
-and then add the new section to `showoff.json` yourself.
+Adding a new section (`directory_name`) will also incorrectly modify
+`showoff.json`. Probably best to `git restore showoff.json` and then add the new
+section to `showoff.json` yourself.
 
 Running your presentation
 -------------------------
