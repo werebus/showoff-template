@@ -1,4 +1,9 @@
-body {
+body,
+.ui-widget,
+.ui-widget input,
+.ui-widget select,
+.ui-widget textarea,
+.ui-widget button {
   font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
   color: #222;
 }
@@ -48,12 +53,16 @@ pre code {
     padding:0;
     overflow: hidden;
   }
+    html.floatingNotes {
+      overflow: scroll;
+    }
 
     body.busy {
       cursor: progress;
     }
 
-  body#download {
+  body#download,
+  body#stats {
     overflow: auto;
   }
 
@@ -91,8 +100,14 @@ pre code {
     z-index: 2147483647; /* max, see http://www.puidokas.com/max-z-index/ */
     display: none;
   }
+    #footer .container {
+      border: 1px solid #ccc;
+      padding: 2px 6px;
+      margin: 0 3px;
+      border-radius: 3px;
+    }
   #followMode {
-    display: none;
+    font-weight: bold;
   }
   #pauseScreen {
       background: rgba(0, 0, 0, 0.85);
@@ -129,6 +144,11 @@ pre code {
   }
 }
 
+.ui-button:active {
+  border-color: #263238;
+  background-color: #263238;
+}
+
 /* plain (non-bullet) text */
 .content > p,
 .content > form > p {
@@ -140,7 +160,8 @@ pre code {
   margin: 2em;
 }
 
-.content img {
+.content img,
+.content svg {
   display:block;
   margin-left:auto;
   margin-right:auto;
@@ -254,8 +275,7 @@ pre code {
 
 .offscreen { position:absolute; top:0; left:-9999px; overflow:hidden; }
 
-#debugInfo,
-#slideFilename {
+body.presenter #debugInfo {
   margin-left: 30px;
 }
 
@@ -277,64 +297,6 @@ img#disconnected {
   height: 100%;
   display: none;
 }
-
-#help {
-  display: none;
-  position:absolute;
-  overflow: auto;
-  top: 5%;
-  left: 25%;
-  width: 50%;
-  max-height: 90%;
-  z-index: 2147483647;
-  padding: 0 16px 16px 16px;
-  border-radius: 4px;
-  -webkit-box-shadow:0 0 25px rgba(0,0,0,0.35);
-  -moz-box-shadow:0 0 25px rgba(0,0,0,0.35);
-  box-shadow:0 0 25px rgba(0,0,0,0.35);
-  background-color: #fff;
-  font-size: 0.75em;
-}
-
-  #help div {
-    padding: 6px 0;
-  }
-
-    #help h1 {
-      border-bottom: 2px solid #ccc;
-    }
-
-    #help div + div {
-      border-top: 1px solid #eee;
-    }
-
-    #help .description,
-    #help .action,
-    #help .hotkeys {
-      display: inline-block;
-      vertical-align: middle;
-    }
-
-    #help .description {
-      width: 30%;
-    }
-
-    #help .action {
-      width: 15%;
-      color: gray;
-    }
-
-    #help .hotkeys {
-      width: 25%;
-    }
-
-    #help .hotkeys .key {
-      border: 1px solid #ccc;
-      background-color: #dfdfdf;
-      border-radius: 0.25em;
-      padding: 0.15em 0.5em;
-      margin: 0.25em;
-    }
 
 /**********************************
  ***       Table styling        ***
@@ -429,10 +391,19 @@ img#disconnected {
   margin-right: 8px;
 }
 
+.sideMenu hr {
+  clear: both;
+}
+
+.optionWrapper,
 .buttonWrapper {
   line-height: 48px;
   padding: 0 16px;
   font-weight: bold;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .buttonWrapper:hover,
@@ -455,16 +426,18 @@ img#disconnected {
   color: initial !important;
 }
 
-.buttonWrapper.split {
-  float: left;
-  width: 50%;
+#paceWrapper {
+  display: flex;
+}
+
+#paceWrapper div {
+  flex: 1;
   line-height: 30px;
   margin: 12px 0;
   padding: 0;
-  text-align: center;
-}
+  text-align: center;}
 
-.buttonWrapper.split i {
+#paceWrapper i {
   margin-right: 0;
 }
 
@@ -515,6 +488,20 @@ img#disconnected {
   padding: .5em 1.5em;
 }
 
+#navigationHover {
+  display: none;
+  position: absolute;
+  overflow: hidden;
+  width: 640px;
+  height: 500px;
+  z-index: 99999;
+  background-color: inherit;
+  margin: 0px;
+  box-shadow:0 0 25px rgba(0,0,0,0.35);
+  transform: scale(0.3);
+  transform-origin: 0 0;
+}
+
 #askedQuestions {
   margin: 0;
 }
@@ -525,18 +512,23 @@ img#disconnected {
   background-color: #dedede;
 }
 #askedQuestions li:hover:after {
-  font-family: FontAwesome;
+  font-family: "Font Awesome 5 Free";
   font-style: normal;
   font-weight: normal;
   text-decoration: inherit;
   padding: 0 8px;
   float: right;
   content: "\f057"; /* fa-times-circle */
+  font-weight: 600;
 }
 #askedQuestions li.closed {
   text-decoration: line-through;
   color: #ccc;
 }
+#languageMenu {
+  line-height: 2em;
+}
+
 
 /* End Sidebar styling */
 
@@ -580,7 +572,7 @@ pre.highlight code.language-console,
 pre.highlight code.console {
   background: #222;
   background: url(titlebar/left.png) left top no-repeat, url(titlebar/right.png) right top no-repeat, url(titlebar/center.png) center top repeat-x #222;
-  color: #63de00;
+  color: #fff;
   padding: 30px 0.5em 0.5em;
   border: 1px solid #acacac;
   border-radius: 6px;
@@ -610,6 +602,13 @@ pre.highlight code.language-powershellconsole.nochrome {
   border-radius: 4px;
 }
 
+pre.highlight code .highlightedLine {
+  background-color: #f5e2e2;
+  color: #000;
+  display: inline-block;
+  width: 100%;
+}
+
 /* to avoid breaking changes */
 .highlight .language-shell {
   display: block;
@@ -618,6 +617,28 @@ pre.highlight code.language-powershellconsole.nochrome {
   border: 2px solid #ddd;
   padding: 0.5em;
   overflow: hidden;
+}
+
+/* Fix spaces in line numbered code blocks */
+pre.highlight td.hljs-ln-numbers {
+    width: 1.5em;
+    text-align: right;
+    padding-right: 0.5em;
+    background-color: white;
+}
+
+pre.highlight td.hljs-ln-code {
+    padding-left: 0.5em;
+}
+
+pre.highlight tr:hover {
+    background-color: yellow;
+    cursor: pointer;
+}
+
+/* Do not add borders to line-numbered lines */
+pre.highlight tr:not(:last-child) {
+    border-bottom: none;
 }
 
 /* Diagram styling: overriding mermaid.css as needed */
@@ -638,10 +659,11 @@ pre.highlight code.language-powershellconsole.nochrome {
 }
 
 .execute:after {
-  font-family: FontAwesome;
+  font-family: "Font Awesome 5 Free";
   content: "\F144";
   position: absolute;
   right: .5em;
+  font-weight: 600;
 }
 
 .executing:after {
@@ -652,8 +674,11 @@ pre.highlight code.language-powershellconsole.nochrome {
 }
 
 .executing:hover { cursor: wait; }
-/* End code execution */
 
+.execute.numbers {
+  padding-bottom: 1.5em;
+}
+/* End code execution */
 
 #tips, #preshow_timer {
   display:inline;
@@ -683,7 +708,7 @@ pre.highlight code.language-powershellconsole.nochrome {
   text-decoration: none;
 }
 #toc a::after {
-  content: leader(".") target-counter(attr(href), page);
+  content: leader(".") target-counter(attr(href url), page);
 }
 
 /**********************************
@@ -778,6 +803,208 @@ form .element {
 }
 
 /**********************************
+ ***     form answer key        ***
+ **********************************/
+
+/* no, the option styling will likely not do anything */
+.slide.answerkey form option.incorrect,
+.slide.answerkey form label.incorrect {
+  text-decoration: line-through;
+  font-weight: 100;
+  opacity: .7;
+  color: #e74c3c; /* red */
+}
+.slide.answerkey form label.correct,
+.slide.answerkey form option.correct {
+  font-weight: 900;
+  color: #00AA00; /* green */
+}
+
+.slide.answerkey input::before {
+  margin-left: -1em;
+  vertical-align: top;
+  font-family: "Font Awesome 5 Free";
+  font-weight: bold;
+  text-decoration: none;
+  font-weight: 600;
+}
+  /* Be careful with order here; these rules depend on cascading order */
+  .slide.answerkey input::before,
+  .slide.answerkey input.correct:checked::before {
+    content: "\f14a"; /* square checkmark */
+    color: #00AA00;   /* green */
+  }
+  .slide.answerkey input:checked::before,
+  .slide.answerkey input.correct::before {
+    content: "\f00d"; /* times */
+    color: #e74c3c;   /* red */
+  }
+
+
+
+/*****************
+ ***   modals   ***
+ *****************/
+.ui-dialog.ui-widget-content {
+  border: none;
+  box-shadow:0 0 25px rgba(0,0,0,0.35);
+}
+
+.ui-dialog .links,
+#settings-modal .description,
+.ui-dialog select {
+  font-size: .75em;
+}
+
+.ui-dialog .ui-dialog-buttonpane{
+  border: none;
+  padding: 0;
+  margin-top: 0;
+}
+
+.ui-dialog .ui-widget-header {
+  border: none;
+  background-color: transparent;
+}
+
+.ui-dialog .setting {
+  margin-bottom: 8px;
+}
+
+.ui-dialog .setting input {
+  margin-left: 1em;
+}
+
+.ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset {
+  float: none;
+  padding-left: 1em;
+}
+
+.ui-dialog .ui-button {
+  font-size: .8em;
+}
+
+.ui-dialog .links {
+  text-align: right;
+}
+
+.ui-dialog p,
+.ui-dialog select {
+  margin-left: 30px;
+}
+
+.ui-dialog p {
+  margin-top: .5em;
+  margin-bottom: .5em;
+}
+
+.ui-dialog .right {
+  float: right;
+}
+
+.ui-dialog .auxillary {
+  background: none;
+  border: none;
+  font-size: small;
+}
+  .ui-dialog .auxillary:active {
+    color: #ccc;
+  }
+
+.no-close .ui-dialog-titlebar-close {
+  display: none;
+}
+
+#help-modal {
+  display: none;
+  font-size: .9em;
+}
+
+  #help-modal .ui-dialog .ui-dialog-title {
+    font-size: 1em;
+  }
+
+#help div {
+  padding: 6px 0;
+}
+
+  #help div + div {
+    border-top: 1px solid #eee;
+  }
+
+  #help .description,
+  #help .action,
+  #help .hotkeys {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  #help .description {
+    width: 30%;
+  }
+
+  #help .action {
+    width: 15%;
+    color: gray;
+  }
+
+  #help .hotkeys {
+    width: 25%;
+  }
+
+  #help .hotkeys .key {
+    border: 1px solid #ccc;
+    background-color: #dfdfdf;
+    border-radius: 0.25em;
+    padding: 0.15em 0.5em;
+    margin: 0.25em;
+  }
+
+ /*****************
+  *** end modal ***
+  *****************/
+
+/******************************
+ ***   Tour customization   ***
+ ******************************/
+.introjs-skipbutton {
+  color: red;
+}
+.introjs-nextbutton {
+  font-weight: bold;
+}
+.introjs-donebutton {
+  color: white;
+  font-weight: bold;
+  background-image: linear-gradient(to bottom, #62c462, #51a351);
+  border-color: #51a351 #51a351 #387038;
+  text-shadow: none;
+}
+.introjs-donebutton:focus,
+.introjs-donebutton:active {
+  background-color: #51a351;
+  background-image: none;
+}
+.tourDark {
+  background-color: rgba(183, 183, 183, 0.9);
+}
+.introjs-tooltip h1,
+.introjs-tooltip h2,
+.introjs-tooltip h3,
+.introjs-tooltip h4,
+.introjs-tooltip h5,
+.introjs-tooltip h6 {
+  border-bottom: 2px solid black;
+  margin: 0 0 0.5em 0;
+}
+.introjs-tooltip h1 { font-size: 1.3em; }
+.introjs-tooltip h2 { font-size: 1.2em; }
+.introjs-tooltip h3 { font-size: 1.1em; }
+.introjs-tooltip h4 { font-size: 1em;   }
+
+
+
+/**********************************
  ***   supplemental materials   ***
  **********************************/
 #slides.supplemental .slide {
@@ -823,6 +1050,7 @@ form .element {
   -webkit-border-radius: 5px;
   -khtml-border-radius: 5px;
   border-radius: 5px;
+  cursor: default;
 }
 /* and to the bar inside the row */
 #stats div.bar {
@@ -843,6 +1071,69 @@ form .element {
   top: 0.15em;
   right: 0.25em;
 }
+
+/* Add the disclosure triangles */
+#stats div.row:before {
+  font-family: "Font Awesome 5 Free";
+  font-style: normal;
+  font-weight: normal;
+  font-size: 1.25em;
+  text-decoration: inherit;
+  font-weight: 600;
+}
+  #stats div.row.top:hover:before {
+    position: absolute;
+    content: "\f0da"; /* fa-caret-right */
+    margin-left: -0.5em;
+  }
+  #stats div.row.top.active:before {
+    position: absolute;
+    content: "\f0d7"; /* fa-caret-down */
+    margin-left: -0.75em;
+  }
+
+#stats h2 {
+  border-bottom: 1px solid #eee;
+}
+#stats #viewers,
+#stats #elapsed {
+  text-align: center;
+  min-height: 2em;
+}
+#stats #viewers.zoomline,
+#stats #elapsed.zoomline {
+  text-align: left;
+}
+#stats .zoomline .col.current,
+#stats .zoomline .col.current .inner {
+  background-color: #ffb105;
+  min-width: 5px;
+}
+#stats .zoomline .col.current:hover {
+  min-width: 10px;
+  background: #ffb105;
+  background: linear-gradient(#efefec, #ffb105);
+}
+#stats .zoomline .col.current:hover .inner,
+#stats .zoomline .col.current .inner:hover {
+  background-color: #f3708d;
+}
+
+
+#stats #stray,
+#stats #idle {
+  display: none;
+  width: 75%;
+  margin: 1em auto;
+  padding: 0.5em;
+  border: 1px solid #ccc;
+}
+  #stats #stray {
+    background-color: #8e030a;
+  }
+  #stats #idle {
+    background-color: #3a64c1;
+  }
 
 /* style all three boxes */
 #stats div#least,
@@ -883,6 +1174,7 @@ form .element {
 }
 #stats div#all div.bar {
   background: #66b366;
+  border-color: #000;
 }
 
 /* detail view */
@@ -902,6 +1194,7 @@ form .element {
 
 .callout {
   padding: 1em;
+  position: relative;
   line-height: 1.2em;
   border: 1px solid #222;
   border-radius: 4px;
@@ -909,13 +1202,26 @@ form .element {
 }
 
   .callout:before {
-    font-family: FontAwesome;
+    font-family: "Font Awesome 5 Free";
     font-style: normal;
     font-weight: normal;
     font-size: 2em;
     text-decoration: inherit;
     position: absolute;
-    left: 1em;
+    left: 0.3em;
+    font-weight: 600;
+  }
+  .callout:after {
+    font-family: "Font Awesome 5 Free";
+    font-style: normal;
+    font-weight: normal;
+    font-size: 1.5em;
+    text-decoration: inherit;
+    position: absolute;
+    left: 0.5em;
+    top: 0.65em;
+    color: #fff;
+    font-weight: 600;
   }
 
   .callout.info,
@@ -924,7 +1230,9 @@ form .element {
   .callout.exercise,
   .callout.stop,
   .callout.thumbsup,
-  .callout.conversation {
+  .callout.conversation,
+  .callout.glossary,
+  .callout.terminal {
     padding-left: 3em;
   }
 
@@ -934,7 +1242,12 @@ form .element {
   .callout.exercise:before     { content: "\f41b"; } /* fa-pencil-square */
   .callout.stop:before         { content: "\f05e"; } /* fa-ban */
   .callout.thumbsup:before     { content: "\f164"; } /* fa-thumbs-up */
-  .callout.conversation:before { content: "\f0e5"; } /* fa-comment */
+  .callout.conversation:before { content: "\f075"; } /* fa-comment */
+  .callout.glossary:before     { content: "\f02d"; } /* fa-book */
+
+  .callout.terminal:before     { content: "\f0c8"; } /* fa-square */
+  .callout.terminal:after      { content: "\f120"; } /* fa-terminal */
+
 
 /* callouts used on error pages */
 .error .callout {
@@ -950,6 +1263,49 @@ form .element {
 /**********************
 ***  end callouts   ***
 **********************/
+.callout.glossary a.label,
+ul.glossary.terms a.label {
+  display: block;
+  font-weight: 600;
+  text-decoration: none;
+}
+ul.glossary.terms a.return {
+  text-decoration: none;
+  padding-right: 3em;
+}
+a.term {
+  text-decoration: none;
+}
+a.term:after {
+  font-family: "Font Awesome 5 Free";;
+  font-size: 0.8em;
+  vertical-align: super;
+  content: "\f27b";
+  text-decoration: none;/* fa-commenting-o */
+  font-weight: 600;
+}
+
+
+/**********************
+***  glossary       ***
+**********************/
+
+/**************************
+*** activity indicators ***
+***************************/
+.slide.activity .activityToggle {
+  position: absolute;
+  bottom: 1em;
+  right: 1em;
+}
+
+#synchronize {
+  display: none;
+  position: absolute;
+  bottom: 1em;
+  left: 1em;
+  font-size: 0.8em;
+}
 
 /* Render hidden headlines so that when we print with wkhtmltopdf, we can use section
    titles for page headers.  it would make sense to put this in the print section, but
@@ -1048,6 +1404,11 @@ h1.section_title {
     height: 20  px;
     margin-left:auto;
     margin-right:auto;
+  }
+
+  /* keep the activity toggle from showing in printed output */
+  .slide.activity .activityToggle {
+    display: none;
   }
 
   /* Styling to make the handout notes appear in the printed output. */

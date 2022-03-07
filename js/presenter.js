@@ -11,32 +11,65 @@ $(document).ready(function(){
   // set up the presenter modes
   mode = { track: true, follow: true, update: true, slave: false, notes: false, annotations: false, layout: 'default'};
 
-  // attempt to open another window for the presentation if the mode defaults
-  // to enabling this. It does not by default, so this is likely a no-op.
-  openSlave();
-
   // the presenter window doesn't need the reload on resize bit
   $(window).unbind('resize');
 
-  $("#startTimer").click(function() { startTimer()  });
-  $("#pauseTimer").click(function() { toggleTimer() });
-  $("#stopTimer").click(function()  { stopTimer()   });
+  $("#startTimer").click(    function() { startTimer()    });
+  $("#pauseTimer").click(    function() { toggleTimer()   });
+  $("#stopTimer").click(     function() { stopTimer()     });
+  $("#close-sidebar").click( function() { toggleSidebar() });
+  $("#edit").click(          function() { editSlide()     });
+// browser security causes a click event to react differently than an actual user click. Even though they're the same damn thing.
+//  $("#report").click(        function() { reportIssue()   });
+  $("#slaveWindow").click(   function() { toggleSlave()   });
+  $("#printSlides").click(   function() { printDialog()   });
+  $("#settings").click(      function() { $("#settings-modal").dialog("open"); });
+  $("#slideSource a").click( function() { openEditor() });
+  $("#notesToggle").click(   function() { toggleNotes() });
+  $("#clearCookies").click(  function() {
+    clearCookies();
+    location.reload(false);
+  });
+  $("#nextWinCancel").click( function() { chooseLayout('default') });
+  $("#openNextWindow").click(function() { openNext() });
 
-  /* zoom slide to match preview size, then set up resize handler. */
-  zoom(true);
-  $(window).resize(function() { zoom(true); });
+  $("#notes-wrapper .fa-minus").click( function() {
+    notesFontSize('decrease');
+  });
+  $("#notes-wrapper .fa-circle").click( function() {
+    notesFontSize('reset');
+  });
+  $("#notes-wrapper .fa-plus").click( function() {
+    notesFontSize('increase');
+  });
 
-  $('#statslink').click(function(e) {
-    presenterPopupToggle('/stats', e);
-  });
-  $('#downloadslink').click(function(e) {
-    presenterPopupToggle('/download', e);
-  });
-  $('#layoutSelector').change(function(e) {
-    chooseLayout(e.target.value);
-  });
+  $('#statslink').click(function(e) { presenterPopupToggle('stats', e); });
+  $('#downloadslink').click(function(e) { presenterPopupToggle('download', e); });
+
+  $('#layoutSelector').change(function(e) { chooseLayout(e.target.value); });
   chooseLayout(null);
 
+  // the language selector is configured in showoff.js
+
+  // must be defined using [] syntax for a variable button name on IE.
+  var closeLabel      = I18n.t('presenter.settings.close');
+  var buttons         = {};
+  buttons[closeLabel] = function() { $(this).dialog( "close" ); };
+
+  $("#settings-modal, #print-modal").dialog({
+    autoOpen: false,
+    dialogClass: "no-close",
+    draggable: false,
+    height: "auto",
+    modal: true,
+    resizable: false,
+    width: 400,
+    buttons: buttons
+  });
+
+  $("#annotationsToggle").checkboxradio({
+    icon: false
+  });
 
   // Bind events for mobile viewing
   if( mobile() ) {
@@ -47,31 +80,29 @@ $(document).ready(function(){
       bind('swipeleft', presNextStep).  // next
       bind('swiperight', presPrevStep); // prev
 
-    $('#topbar #slideSource').click( function(e) {
-      $('#sidebar').toggle();
-    });
-
     $('#topbar #update').click( function(e) {
       e.preventDefault();
-      $.get("/getpage", function(data) {
+      $.get("getpage", function(data) {
         gotoSlide(data);
       });
     });
   }
 
-  // wait until the presentation is loaded to hook up the previews.
-  // TODO: If we decide to implement this for the audience display, we can move it later
-  $("body").bind("showoff:loaded", function (event) {
-    $('#navigation li a.navItem').hover(function() {
-      var position = $(this).position();
-      $('#navigationHover').css({top: position.top, left: position.left + $('#navigation').width() + 5})
-      $('#navigationHover').html(slides.eq($(this).attr('rel')).html());
-      $('#navigationHover').show();
-    },function() {
-      $('#navigationHover').hide();
-    });
+  // set up notes resizing
+  $( "#notes" ).resizable({
+    minHeight: 0,
+    handles: {"n": $(".notes-grippy")}
+  });
+  $("#notes").resize(function(){
+    document.cookie = "notes="+$('#notes').height();
   });
 
+  // restore the UI settings
+  var ui = document.cookieHash['ui'];
+  $('#notes').height(document.cookieHash['notes']);
+  if(document.cookieHash['sidebar'] == false) {
+    toggleSidebar();
+  }
 
   // Hide with js so jquery knows what display property to assign when showing
   toggleAnnotations();
@@ -114,11 +145,33 @@ $(document).ready(function(){
     sendAnnotationConfig('fillColor', color);
   });
 
+  $('#statusbar .controls input').checkboxradio({icon: false });
   $('#remoteToggle').change( toggleFollower );
   $('#followerToggle').change( toggleUpdater );
   $('#annotationsToggle').change( toggleAnnotations );
 
+  initializeSettings();
   setInterval(function() { updatePace() }, 1000);
+
+  setInterval(function() {
+    $.getJSON("stats_data", function( json ) {
+      var percent = json['stray_p'];
+      if(percent > 25) {
+        $('#topbar #statslink').addClass('warning');
+        $('#topbar #statslink').attr('title', percent + '%' +  I18n.t('stats.stray'));
+      }
+      else {
+        $('#stray').hide(); // in case the popup is open
+        $('#topbar #statslink').removeClass('warning');
+        $('#topbar #statslink').attr('title', "");
+      }
+
+      if( $('#presenterPopup #stats').is(':visible') ) {
+        setupStats(json);
+      }
+    });
+
+  }, 30000);
 
   // Tell the showoff server that we're a presenter
   register();
@@ -138,16 +191,25 @@ $(document).ready(function(){
     }
   };
 
+  /* zoom slide to match preview size, then set up resize handler. */
+  zoom(true);
+  $(window).resize(function() { zoom(true); });
+
 });
 
 function presenterPopupToggle(page, event) {
   event.preventDefault();
+  // remove class from both so we don't lose an active state if user clicks the wrong item
+  $('#statslink').removeClass('enabled');
+  $('#downloadslink').removeClass('enabled');
+
   var popup = $('#presenterPopup');
   if (popup.length > 0) {
     popup.slideUp(200, function () {
       popup.remove();
     });
   } else {
+    $(event.target).addClass('enabled');
     popup = $('<div>');
     popup.attr('id', 'presenterPopup');
     $.get(page, function(data) {
@@ -158,15 +220,13 @@ function presenterPopupToggle(page, event) {
         href: page,
         target: '_new'
       });
-      link.text('Open in a new page...');
+      link.text(I18n.t('presenter.topbar.newpage'));
 
       content.attr('id', page.substring(1, page.length));
       content.append(link);
       /* use .siblings() because of how jquery formats $(data) */
       content.append($(data).siblings('#wrapper').html());
       popup.append(content);
-
-      setupStats(); // this function is in showoff.js because /stats does not load presenter.js
 
       $('body').append(popup);
       popup.slideDown(200); // #presenterPopup is display: none by default
@@ -190,7 +250,7 @@ function editSlide() {
 // call the edit endpoint to open up a local file editor
 function openEditor() {
   var slide = $("span#slideFile").text().replace(/:\d+$/, '');
-  var link  = '/edit/' + slide + ".md";
+  var link  = 'edit/' + slide + ".md";
   $.get(link);
 }
 
@@ -205,22 +265,27 @@ function windowIsOpen(window) {
 
 function toggleSlave() {
   mode.slave = !mode.slave;
-  openSlave();
+  if (mode.slave) {
+    openSlave();
+  } else {
+    closeSlave();
+  }
 }
 
 // Open, or maintain connection & reopen slave window.
 function openSlave()
 {
-  if (mode.slave) {
-    try {
-      if(windowIsClosed(slaveWindow)){
-          slaveWindow = window.open('/' + window.location.hash, 'toolbar');
-      }
-      else if(slaveWindow.location.hash != window.location.hash) {
-        // maybe we need to reset content?
-        slaveWindow.location.href = '/' + window.location.hash;
-      }
+  try {
+    if(windowIsClosed(slaveWindow)){
+        slaveWindow = window.open('./' + window.location.hash, 'toolbar');
+    }
+    else if(slaveWindow.location.hash != window.location.hash) {
+      // maybe we need to reset content?
+      slaveWindow.location.href = './' + window.location.hash;
+    }
 
+    // give the window time to load before poking at it
+    window.setTimeout(function() {
       // maintain the pointer back to the parent.
       slaveWindow.presenterView = window;
       slaveWindow.mode = { track: false, slave: true, follow: false };
@@ -228,26 +293,45 @@ function openSlave()
       // Add a class to differentiate from the audience view
       slaveWindow.document.getElementById("preso").className = 'display';
 
-      $('#slaveWindow').addClass('enabled');
-    }
-    catch(e) {
-      console.log('Failed to open or connect display window. Popup blocker?');
-    }
+      // remove some display view chrome
+      $('.slide.activity', slaveWindow.document).removeClass('activity').children('.activityToggle').remove();
+      $('#synchronize', slaveWindow.document).remove();
 
-    // Set up a maintenance loop to keep the connection between windows. I wish there were a cleaner way to do this.
-    if (typeof maintainSlave == 'undefined') {
-      maintainSlave = setInterval(openSlave, 1000);
-    }
+      // call back and update the parent presenter if the window is closed
+      slaveWindow.onunload = function(e) {
+        slaveWindow.opener.closeSlave(true);
+      };
+    }, 500);
+
+    $('#slaveWindow').addClass('enabled');
   }
-  else {
-    try {
+  catch(e) {
+    console.log('Failed to open or connect display window. Popup blocker?');
+  }
+}
+
+function closeSlave(calledByChild) {
+  try {
+    mode.slave = false;
+    $('#slaveWindow').removeClass('enabled');
+
+    if(calledByChild) {
+      // if this is called by the display view, we don't want to try to close it again.
+      // browsers are the worst. If the user hit *refresh*, then this should reconnect the display view
+      window.setTimeout(function() {
+        if(! windowIsClosed(slaveWindow)) {
+          openSlave();
+        }
+      }, 500);
+    } else {
+      // called normally and close the display view
       slaveWindow && slaveWindow.close();
-      $('#slaveWindow').removeClass('enabled');
-    }
-    catch (e) {
-      console.log('Display window failed to close properly.');
     }
   }
+  catch (e) {
+    console.log('Display window failed to close properly.');
+  }
+
 }
 
 function nextSlideNum(url) {
@@ -258,6 +342,42 @@ function nextSlideNum(url) {
   return snum;
 }
 
+// allows subsystems to pin the sidebar open. The sidebar will only hide when
+// all pins have been removed.
+function pinSidebar(pin) {
+  $('#topbar #close-sidebar').addClass('disabled');
+  $('#topbar #close-sidebar').removeClass('fa-rotate-90');
+  $('#sidebar').show();
+  zoom(true);
+
+  mode.pinnedSidebar = mode.pinnedSidebar || []
+  if (mode.pinnedSidebar.indexOf(pin) == -1) {
+    mode.pinnedSidebar.push(pin);
+  }
+}
+
+function unpinSidebar(pin) {
+  if (Array.isArray(mode.pinnedSidebar)) {
+    mode.pinnedSidebar = mode.pinnedSidebar.filter(function(item) {
+      return item !== pin;
+    });
+
+    if(mode.pinnedSidebar.length == 0) {
+      $('#topbar #close-sidebar').removeClass('disabled');
+      delete mode.pinnedSidebar;
+    }
+  }
+}
+
+function toggleSidebar() {
+  if (!mode.pinnedSidebar) {
+    $('#topbar #close-sidebar').toggleClass('fa-rotate-90');
+    $('#sidebar').toggle();
+    zoom(true);
+
+    document.cookie = "sidebar="+$('#sidebar').is(':visible');
+  }
+}
 
 function toggleNotes() {
   mode.notes = !mode.notes;
@@ -265,10 +385,20 @@ function toggleNotes() {
   if (mode.notes) {
     try {
       if(windowIsClosed(notesWindow)){
-        notesWindow = blankStyledWindow("Showoff Notes", 'width=350,height=450', 'notes', true);
-        window.setTimeout(postSlide, 500);
+        notesWindow = blankStyledWindow(I18n.t('presenter.notes.label'), 'width=350,height=450', 'notes', true);
+        window.setTimeout(function() {
+          $(notesWindow.document.documentElement).addClass('floatingNotes');
+
+          // call back and update the parent presenter if the window is closed
+          notesWindow.onunload = function(e) {
+            notesWindow.opener.toggleNotes();
+          };
+
+          postSlide();
+        }, 500);
+
       }
-      $('#notesWindow').addClass('enabled');
+      $('#notes').addClass('hidden');
     }
     catch(e) {
       console.log('Failed to open notes window. Popup blocker?');
@@ -277,11 +407,30 @@ function toggleNotes() {
   else {
     try {
       notesWindow && notesWindow.close();
-      $('#notesWindow').removeClass('enabled');
+      $('#notes').removeClass('hidden');
     }
     catch (e) {
       console.log('Notes window failed to close properly.');
     }
+  }
+
+  zoom(true);
+}
+
+function notesFontSize(action) {
+  var current = parseInt($('#notes').css('font-size'));
+  switch (action) {
+    case 'increase':
+      $('#notes').css('font-size', current * 1.1);
+      break;
+
+    case 'decrease':
+      $('#notes').css('font-size', current * 0.9);
+      break;
+
+    case 'reset':
+      $('#notes').css('font-size', '');
+      break;
   }
 }
 
@@ -302,7 +451,7 @@ function blankStyledWindow(title, dimensions, classes, resizable) {
     // them into elements again in the context of the other document.
     // Because IE.
 
-    $(newWindow.document.head).append('<base href="' + window.location.origin + '"/>');
+    $(newWindow.document.head).append('<base href="' + location.origin + location.root + '"/>');
     $('link[rel="stylesheet"]').each(function() {
       var href  = $(this).attr('href');
       var style = '<link rel="stylesheet" type="text/css" href="' + href + '">'
@@ -319,15 +468,55 @@ function blankStyledWindow(title, dimensions, classes, resizable) {
   return newWindow;
 }
 
-function printSlides()
+function printDialog() {
+  var list = $('#print-modal #print-sections');
+
+  if(! list.hasClass('processed')) {
+    sections = getAllSections()
+    sections.unshift('') // add the "none" option
+    sections.forEach(function(section) {
+      var link = $('<a>');
+      var item = $('<li>');
+      link.attr('href', '#');
+      link.click(function(){
+        printSlides(section);
+      });
+
+      switch(section) {
+        case '':
+          link.text(I18n.t('presenter.print.none'));
+          break;
+        case 'notes':
+          link.text(I18n.t('presenter.print.notes'));
+          break;
+        case 'handouts':
+          link.text(I18n.t('presenter.print.handouts'));
+          break;
+        default:
+          link.text(section);
+      }
+
+      item.append(link);
+      list.append(item);
+    });
+    list.addClass('processed');
+  }
+
+  $("#print-modal").dialog("open");
+}
+
+function printSlides(section)
 {
   try {
-    var printWindow = window.open('/print');
-    printWindow.window.print();
+    var printWindow = window.open('print/'+section);
+    $(printWindow).on('load', function(){
+      printWindow.window.print();
+    });
   }
   catch(e) {
     console.log('Failed to open print window. Popup blocker?');
   }
+  $("#print-modal").dialog("close");
 }
 
 function postQuestion(question, questionID) {
@@ -340,6 +529,9 @@ function postQuestion(question, questionID) {
 
   $("#unanswered").append(questionItem);
   updateQuestionIndicator();
+
+  // don't allow the sidebar to hid when questions exist
+  pinSidebar('question');
 }
 
 function removeQuestion(questionID) {
@@ -348,6 +540,10 @@ function removeQuestion(questionID) {
           .remove();
   $('#answered').append($(question));
   updateQuestionIndicator();
+
+  if($('#unanswered li').length == 0) {
+    unpinSidebar('question');
+  }
 }
 
 function updateQuestionIndicator() {
@@ -391,6 +587,15 @@ function updatePace() {
   var position = Math.max(Math.min(sum, 90), 10); // between 10 and 90
   $("#paceMarker").css({ left: position+"%" });
 
+  if (position > 50) {
+    $("#feedbackPace .obscure.left").css({ width: "50%" });
+    $("#feedbackPace .obscure.right").css({ width: (100-position)+"%" });
+  }
+  else {
+    $("#feedbackPace .obscure.right").css({ width: "50%" });
+    $("#feedbackPace .obscure.left").css({ width: position+"%" });
+  }
+
   if(position > 75) {
     $("#paceFast").show();
   } else {
@@ -403,6 +608,10 @@ function updatePace() {
   }
 }
 
+function updateActivityCompletion(count) {
+  currentSlide.children('.count').text(count);
+}
+
 // extend this function to add presenter bits
 var origGotoSlide = gotoSlide;
 gotoSlide = function (slideNum)
@@ -412,7 +621,7 @@ gotoSlide = function (slideNum)
     if ( !mobile() ) {
       $("#navigation li li").get(slidenum).scrollIntoView();
     }
-    postSlide()
+    postSlide();
 }
 
 // override with an alternate implementation.
@@ -429,7 +638,9 @@ reconnectControlChannel = function() {
     },
     error: function() {
       console.log("Showoff server unavailable");
-      setTimeout(reconnectControlChannel(), 5000);
+      setTimeout( function() {
+        reconnectControlChannel();
+      }, 5000);
     },
   });
 }
@@ -479,6 +690,26 @@ function presNextStep()
 	update();
 }
 
+function presPrevSec()
+{
+  prevSec();
+  try { slaveWindow.prevSec(false) } catch (e) {};
+  try { nextWindow.gotoSlide(nextSlideNum()) } catch (e) {};
+  postSlide();
+
+  update();
+}
+
+function presNextSec()
+{
+  nextSec();
+  try { slaveWindow.nextSec(false) } catch (e) {};
+  try { nextWindow.gotoSlide(nextSlideNum()) } catch (e) {};
+  postSlide();
+
+  update();
+}
+
 function postSlide() {
 	if(currentSlide) {
     // clear out any existing rendered forms
@@ -501,32 +732,36 @@ function postSlide() {
     $('#notes').html(notes);
 
     var sections = getCurrentSections();
-    if(sections.size() > 1) {
-      var ul = $('<ul>').addClass('section-selector');
-      sections.each(function(idx, value){
-        var li = $('<li/>').appendTo(ul);
+
+    var ul = $('.section-selector').empty();
+    if(sections.size() > 0) {
+      sections.each( function (idx, value) {
+        var li = $('<li>').prependTo(ul);
         var a  = $('<a/>')
                       .text(value)
                       .attr('href','javascript:setCurrentSection("'+value+'");')
                       .appendTo(li);
 
-        if(section == value) {
+        if(section === value) {
           li.addClass('selected');
         }
       });
-
-      $('#notes').prepend(ul);
     }
 
     var nextIndex = slidenum + 1;
-    var nextSlide = (nextIndex >= slides.size()) ? '' : slides.eq(nextIndex).html();
-    var prevSlide = (slidenum > 0) ? slides.eq(slidenum - 1).html() : ''
+    var nextSlide = (nextIndex >= slides.size()) ? $('') : slides.eq(nextIndex);
+    var nextThumb = $('#nextSlide .container');
+    var prevSlide = (slidenum > 0) ? slides.eq(slidenum - 1) : $('');
+    var prevThumb = $('#prevSlide .container');
 
-    $('#nextSlide .container').html(nextSlide);
-    $('#prevSlide .container').html(prevSlide);
+    nextThumb.html(nextSlide.html());
+    prevThumb.html(prevSlide.html());
+
+    copyBackground(nextSlide, nextThumb);
+    copyBackground(prevSlide, prevThumb);
 
     if (windowIsOpen(nextWindow)) {
-      $(nextWindow.document.body).html(nextSlide);
+      $(nextWindow.document.body).html(nextSlide.html());
     }
 
     if (windowIsOpen(notesWindow)) {
@@ -535,10 +770,16 @@ function postSlide() {
 
 		var fileName = currentSlide.children('div').first().attr('ref');
 		$('#slideFile').text(fileName);
+    $('#progress').progressbar({ max: slideTotal })
+                  .progressbar('value', slidenum+1);
 
     $("#notes div.form.wrapper").each(function(e) {
       renderFormInterval = renderFormWatcher($(this));
     });
+
+    if(currentSlide.hasClass('activity')) {
+      currentSlide.children('.activityToggle').replaceWith('<span class="count">0</span>');
+    }
 	}
 }
 
@@ -554,7 +795,9 @@ function presenterKeyDown(event){
   switch(getAction(event)) {
     case 'DEBUG':     toggleDebug();      break;
     case 'PREV':      presPrevStep();     break; // Watch that this uses presPrevStep and not prevStep
+    case 'PREVSEC':   presPrevSec();      break; // Same here
     case 'NEXT':      presNextStep();     break; // Same here
+    case 'NEXTSEC':   presNextSec();      break; // Same here
     case 'REFRESH':   reloadSlides();     break;
     case 'RELOAD':    reloadSlides(true); break;
     case 'CONTENTS':  toggleContents();   break;
@@ -631,6 +874,9 @@ function startTimer() {
   $("#timerDisplay").show();
   $("#timerSection").addClass('open');
 
+  // keep the sidebar open while the timer is active
+  pinSidebar('timer');
+
   var time = parseInt( $("#timerMinutes").val() ) * 60;
   if(time) {
     $('#timerDisplay')
@@ -703,6 +949,8 @@ function toggleTimer() {
 function endTimer() {
   $('#stopTimer').val('Reset');
   $("#pauseTimer").hide();
+
+  // don't unpin yet, we don't want the timer to just wander off into the distance!
 }
 
 function stopTimer() {
@@ -716,6 +964,15 @@ function stopTimer() {
   $("#pauseTimer").hide();
   $("#timerDisplay").hide();
   $('#timerSection').removeClass();
+
+  // only unpin when the user has dismissed the timer
+  unpinSidebar('timer');
+}
+
+function initializeSettings() {
+  // enable this if we are the "master" presenter
+  $("#followerToggle").prop("checked", master);
+  mode.update = $("#followerToggle").prop("checked");
 }
 
 /********************
@@ -736,8 +993,7 @@ function toggleUpdater()
 /********************
  Annotations
  ********************/
-function toggleAnnotations()
-{
+function toggleAnnotations() {
   mode.annotations = $("#annotationsToggle").prop("checked");
 
   if(mode.annotations) {
@@ -755,7 +1011,7 @@ function toggleAnnotations()
 }
 
 function openNext() {
-  $("#nextWindowConfirmation").slideUp(125);
+  $("#nextWindowConfirmation").hide();
   try {
     if(windowIsClosed(nextWindow)){
       nextWindow = blankStyledWindow("Next Slide Preview", 'width=320,height=300', 'next');
@@ -770,7 +1026,7 @@ function openNext() {
 
         postSlide();
       }, 500);
-
+      $("#settings-modal").dialog("close");
     }
   }
   catch(e) {
@@ -789,7 +1045,7 @@ function chooseLayout(layout)
 
   // in case we're being called externally, make the UI match
   $('#layoutSelector').val(layout);
-  $("#nextWindowConfirmation").slideUp(125);
+  $("#nextWindowConfirmation").hide();
   console.log("Setting layout to " + layout);
 
   // change focus so we don't inadvertently change layout again by changing slides
@@ -843,7 +1099,7 @@ function chooseLayout(layout)
       break;
 
     case 'floating':
-      $("#nextWindowConfirmation").slideDown(125);
+      $("#nextWindowConfirmation").show();
       break;
 
     default:

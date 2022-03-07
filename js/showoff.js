@@ -1,9 +1,10 @@
-/* ShowOff JS Logic */
+/* Showoff JS Logic */
 
-var ShowOff = {};
+var Showoff = {};
 
 var preso_started = false
 var slidenum = 0
+var presenterSlideNum = null
 var slideTotal = 0
 var slides
 var currentSlide
@@ -19,11 +20,22 @@ var lastMessageGuid = 0
 var query;
 var section = 'handouts'; // default to showing handout notes for display view
 var slideStartTime = new Date().getTime()
+var activityIncomplete = false; // slides won't advance when this is on
 
-var loadSlidesBool
-var loadSlidesPrefix
+var loadSlidesBool;
 
 var mode = { track: true, follow: true };
+
+// Make sure we have a sane value here
+location.root = location.root || location.pathname;
+
+// global variable to register tours with
+var tours = {};
+var menuTourRunning = false;
+
+// a dummy websocket object to make standalone presentations easier.
+var ws = {}
+ws.send = function() { /* no-op */ }
 
 // since javascript doesn't have a built-in way to get to cookies easily,
 // let's just add our own data structure.
@@ -32,13 +44,17 @@ document.cookie.split(';').forEach( function(item) {
   var pos = item.indexOf('=');
   var key = item.slice(0,pos).trim();
   var val = item.slice(pos+1).trim();
+  try {
+    val = JSON.parse(val);
+  }
+  catch(e) { }
 
   document.cookieHash[key] = val;
 });
 
 $(document).on('click', 'code.execute', executeCode);
 
-function setupPreso(load_slides, prefix) {
+function setupPreso(load_slides) {
 	if (preso_started) {
 		alert("already started");
 		return;
@@ -46,6 +62,7 @@ function setupPreso(load_slides, prefix) {
 	preso_started = true;
 
   if (! cssPropertySupported('flex') ) {
+    // TODO: translate this this page!
     window.location = 'unsupported.html';
   }
 
@@ -58,12 +75,15 @@ function setupPreso(load_slides, prefix) {
 
 	// Load slides fetches images
 	loadSlidesBool = load_slides;
-	loadSlidesPrefix = prefix || '/';
-	loadSlides(loadSlidesBool, loadSlidesPrefix);
+	loadSlides(loadSlidesBool);
 
   setupSideMenu();
 
-	doDebugStuff();
+  // Set up the language selector
+  $('#languageSelector').change(function(e) { chooseLanguage(e.target.value); });
+  chooseLanguage(null);
+
+  doDebugStuff();
 
 	// bind event handlers
 	toggleKeybinding('on');
@@ -87,14 +107,79 @@ function setupPreso(load_slides, prefix) {
   // yes, this is a global
   annotations = new Annotate();
 
-  // Open up our control socket
-  if(mode.track) {
-    connectControlChannel();
+  // must be defined using [] syntax for a variable button name on IE.
+  var buttons = [
+    {
+      text: I18n.t('help.close'),
+      click: function() { $(this).dialog( "close" ); }
+    }
+  ];
+
+  if($("body").hasClass("presenter")) {
+    buttons.push({
+      text: I18n.t('tour.show'),
+      "class": 'right',
+      click: function() {
+        $(this).dialog( "close" );
+        showTour('showoff:presenter', false);
+      }
+    });
   }
+  else {
+    buttons.push({
+      text: I18n.t('tour.reset'),
+      "class": 'auxillary right',
+      click: function() {
+        document.cookie="tours=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        document.cookie="tourVersion=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        delete document.cookieHash['tours'];
+        delete document.cookieHash['tourVersion'];
+      }
+    });
+  }
+
+  $("#help-modal").dialog({
+    autoOpen: false,
+    dialogClass: "no-close",
+    draggable: false,
+    height: 640,
+    modal: true,
+    resizable: false,
+    width: 640,
+    buttons: buttons
+  });
+
+  $("#synchronize").button();
+  $("#synchronize").click(function() {
+    synchronize();
+  });
+
+  // wait until the presentation is loaded to hook up the previews.
+  $("body").bind("showoff:loaded", function (event) {
+    var target = $('#navigationHover');
+
+    $('#navigation li a.navItem').hover(function() {
+      var position = $(this).position();
+      var source   = slides.eq($(this).attr('rel'));
+
+      target.css({top: position.top, left: position.left + $('#navigation').width() + 5})
+      target.html(source.html());
+
+      copyBackground(source, target);
+
+      target.show();
+    },function() {
+      target.hide();
+    });
+  });
+
+  // Open up our control socket
+  connectControlChannel();
+
 }
 
-function loadSlides(load_slides, prefix, reload, hard) {
-  var url = loadSlidesPrefix + "slides";
+function loadSlides(load_slides, reload, hard) {
+  var url = "slides";
   if (reload) {
     url += "?cache=clear";
   }
@@ -108,18 +193,18 @@ function loadSlides(load_slides, prefix, reload, hard) {
       }
       else {
         $("#slides img").batchImageLoad({
-          loadingCompleteCallback: initializePresentation(prefix)
+          loadingCompleteCallback: initializePresentation()
         });
       }
     })
   } else {
     $("#slides img").batchImageLoad({
-      loadingCompleteCallback: initializePresentation(prefix)
+      loadingCompleteCallback: initializePresentation()
     })
   }
 }
 
-function initializePresentation(prefix) {
+function initializePresentation() {
 	// unhide for height to work in static mode
   $("#slides").show();
 
@@ -151,7 +236,16 @@ function initializePresentation(prefix) {
 
   $('pre.highlight code').each(function(i, block) {
     try {
+      // syntax highlight the code
       hljs.highlightBlock(block);
+
+      // then add focus on any lines marked
+      highlightLines(block);
+
+      if($(block).hasClass('numbers')) {
+        hljs.lineNumbersBlock(block);
+      }
+
     } catch(e) {
       console.log('Syntax highlighting failed on ' + $(this).closest('div.slide').attr('id'));
       console.log('Syntax highlighting failed for ' + $(this).attr('class'));
@@ -177,20 +271,64 @@ function initializePresentation(prefix) {
   });
 
   $(".content form div.tools input.display").click(function(e) {
+    var form   = $(this).closest('form');
+    var formID = form.attr('id');
+
+    ws.send(JSON.stringify({ message: 'answerkey', formID: formID}));
     try {
       // If we're a presenter, try to bust open the slave display
-      slaveWindow.renderForm($(this).closest('form').attr('id'));
+      slaveWindow.renderForm(formID);
     }
     catch (e) {
       console.log(e);
-      renderForm($(this).closest('form'));
+      renderForm(form);
     }
   });
+
+  $('.slide.activity .activityToggle input.activity').checkboxradio();
+  $('.slide.activity .activityToggle input.activity').change(toggleComplete);
 
   // initialize mermaid, but don't render yet since the slide sizes are indeterminate
   mermaid.initialize({startOnLoad:false});
 
+  // translate SVG images, inlining them first if needed.
+  $('img').simpleStrings({strings: user_translations});
+  $('svg').simpleStrings({strings: user_translations});
+  $('.translate').simpleStrings({strings: user_translations});
+
   $("#preso").trigger("showoff:loaded");
+}
+
+function copyBackground(source, target) {
+  // to get this to properly copy over in Firefox, we need to iterate each property instead of using shorthand
+  ['background-color',
+   'background-image',
+   'background-repeat',
+   'background-position',
+   'background-attachment'].forEach(function(property) {
+    target.css(property, source.css(property));
+  })
+
+  // we have to do this separately so we can transform it
+  var bgsize = source.css('background-size');
+
+  var regex = /^(\d+)(\S{1,2})(?: (\d+)(\S{1,2}))?$/;
+  var match = regex.exec(bgsize);
+  if(match) {
+    var width  = match[1];
+    var unit_w = match[2];
+    var height = match[3] || '';
+    var unit_h = match[4] || '';
+
+    if(unit_w != '%'                 ) { width  /= 2 };
+    if(unit_h != '%' && height != '' ) { height /= 2 };
+
+    target.css('background-size', width+unit_w+' '+height+unit_h);
+  }
+  else {
+    // contain, cover, etc
+    target.css('background-size', bgsize);
+  }
 }
 
 function zoom(presenter) {
@@ -209,7 +347,15 @@ function zoom(presenter) {
   }
 
   // Calculate margins to center the thing *before* scaling
-  var hMargin = (hBody - hSlide) /2;
+  // Vertically center on presenter, top align everywhere else
+  if(presenter) {
+    var hMargin = (hBody - hSlide) /2;
+  }
+  else {
+    // (center of slide to top) - (half of the zoomed slide)
+    //var hMargin = (hSlide/2 * newZoom) - (hSlide / 2);
+    var hMargin = (hSlide * newZoom - hSlide) / 2;
+  }
   var wMargin = (wBody - wSlide) /2;
 
   preso.css("margin", hMargin + "px " + wMargin + "px");
@@ -230,10 +376,25 @@ function zoom(presenter) {
   }
 }
 
+function openMenu() {
+  toggleKeybinding();
+  $('#feedbackSidebar').show();
+  // if the menu tour is open, make it harder to lose the menu
+  if(! menuTourRunning ) {
+    $('#sidebarExit').show();
+  }
+}
+
+function closeMenu(force) {
+  if(! menuTourRunning || force ) {
+    $('#feedbackSidebar, #sidebarExit').hide();
+    toggleKeybinding('on');
+  }
+}
+
 function setupSideMenu() {
   $("#hamburger").click(function() {
-    $('#feedbackSidebar, #sidebarExit').toggle();
-    toggleKeybinding();
+    openMenu();
   });
 
   $("#navToggle").click(function() {
@@ -243,7 +404,7 @@ function setupSideMenu() {
 
   $('#fileDownloads').click(function() {
     closeMenu();
-    window.open('/download');
+    window.open('download');
   })
 
   $("#paceSlower").click(function() {
@@ -264,7 +425,7 @@ function setupSideMenu() {
       var question = $("#question").val()
       var qid = askQuestion(question);
 
-      feedback_response(this, "Sending...");
+      feedback_response(this, I18n.t('menu.sending'));
       $("#question").val('');
 
       var questionItem = $('<li/>').text(question).attr('id', qid);
@@ -301,11 +462,6 @@ function setupSideMenu() {
   $('#closeMenu, #sidebarExit').click(function() {
     closeMenu();
   });
-
-  function closeMenu() {
-    $('#feedbackSidebar, #sidebarExit').hide();
-    toggleKeybinding('on');
-  }
 
   function feedback_response(elem, response) {
     var originalText = $(elem).text();
@@ -346,11 +502,7 @@ function setupMenu() {
       sectionUL = '';
 
   slides.each(function(s, slide){
-    var slidePath = $(slide)
-      .find(".content")
-      .attr('ref')
-      .split('/')
-      .shift();
+    var slidePath = $(slide).attr('data-section');
     var headers = $(slide).children("h1, h2");
     var slideTitle = '';
     var content;
@@ -389,13 +541,13 @@ function setupMenu() {
       content    = $(slide).find(".content");
       slideTitle = content.text().split("\n").filter(Boolean)[0] || ''; // split() gives us an empty array when there's no content.
 
+      // just in case we've got any extra whitespace around.
+      slideTitle = slideTitle.trim();
+
       // if no content (like photo only) fall back to slide name
       if (slideTitle == "") {
         slideTitle = content.attr('ref').split('/').pop();
       }
-
-      // just in case we've got any extra whitespace around.
-      slideTitle = slideTitle.trim();
     }
 
     var navLink = $("<a>")
@@ -422,6 +574,167 @@ function setupMenu() {
   $("#navigation").append(nav);
 }
 
+
+// this function generates an object that consumes the JSON form of translations
+// provided by the i18n gem. It provides pretty nearly the same calling syntax
+// as the Ruby library's dot-form.
+//
+// var I18n = new translation(data);
+// console.log(I18n.t('some.key.to.translate'));
+function translation(data) {
+  this.localized = data;
+  this.translate = function(key) {
+    var item = this.localized;
+    try {
+      key.split('.').forEach(function(val) {
+        item = item[val];
+      });
+      if(typeof(item) != 'string') {
+        item = null;
+      }
+    }
+    catch(e) {
+      item = null;
+    }
+    return item || ("No translation for " + key);
+  }
+  this.t = function(key) { return this.translate(key); }
+}
+
+function chooseLanguage(locale) {
+  // yay for half-baked data storage schemes
+  newlocale = locale || document.cookieHash['locale'] || 'auto';
+
+  if(locale){
+    document.cookie = "locale="+newlocale;
+    location.reload(false);
+  } else {
+    $('#languageSelector').val(newlocale);
+  }
+}
+
+// at some point this should get more sophisticated. Our needs are pretty minimal so far.
+function clearCookies() {
+  document.cookie = "sidebar=;expires=Thu, 21 Sep 1979 00:00:01 UTC;";
+  document.cookie = "locale=;expires=Thu, 21 Sep 1979 00:00:01 UTC;";
+  document.cookie = "layout=;expires=Thu, 21 Sep 1979 00:00:01 UTC;";
+  document.cookie = "notes=;expires=Thu, 21 Sep 1979 00:00:01 UTC;";
+  document.cookie = "tourVersion=;expires=Thu, 21 Sep 1979 00:00:01 UTC;";
+  document.cookie = "presenter=;expires=Thu, 21 Sep 1979 00:00:01 UTC;";
+  document.cookieHash = {};
+}
+
+// called when slides with special content are displayed. (like the Activity complete toggle)
+// Show a "welcome intro" the first time it's seen.
+function showTour(name, record) {
+  record = (typeof record == 'undefined' ? true : record) // default true
+
+  // we don't need to show tours if we're a display view
+  if('presenterView' in window) {
+    return false;
+  }
+
+  // don't blow up if someone calls a missing tour
+  if(!(name in tours)) {
+    console.log('No such tour: '+name);
+    return false;
+  }
+
+  var clientTours = document.cookieHash['tours'] || [];
+
+  // if we haven't seen this one before...
+  if(clientTours.indexOf(name) == -1) {
+    toggleKeybinding('off');
+
+    var steps = tours[name] || [];
+
+    var intro = introJs();
+    intro.setOptions({
+      showStepNumbers: false,
+      showBullets: false,
+      steps: steps
+    });
+
+    if(steps.length > 1) {
+      intro.setOption("showBullets", true);
+    }
+
+    intro.onexit(function() {
+      toggleKeybinding('on');
+
+      if(menuTourRunning) {
+        menuTourRunning = false;
+        $("#hamburger").off('click', null, introNext);
+        $("#closeMenu").off('click', null, introClose);
+        closeMenu();
+      }
+    });
+
+    // record tour completion so we don't continue to annoy people
+    intro.oncomplete(function() {
+      if(record) {
+        clientTours.push(name);
+        document.cookieHash['tours'] = clientTours;
+        document.cookie = "tours="+JSON.stringify(clientTours)+"; max-age=31536000; path=/;";
+      }
+
+      // this keeps track of the version of the presenter tour we've seen
+      if(name == 'showoff:presenter:auto') {
+        document.cookie = "tourVersion="+tourVersion+"; max-age=31536000; path=/;";
+        document.cookieHash['tourVersion'] = tourVersion;
+
+        // we don't need this anymore; let's save a byte or three
+        delete tours['showoff:presenter:auto'];
+      }
+
+    });
+
+    // if we're showing the menu, we need to do some extra bookeeping to make it usable
+    if(name == 'showoff:menu') {
+      menuTourRunning = true;
+
+      // A couple helper functions to add to the menu bindings.
+      // We have to do it here because 'intro' is in scope
+      var introNext  = function() { intro.nextStep() };
+      var introClose = function() { intro.exit()     };
+
+      $("#hamburger").on('click', null, introNext);
+      $("#closeMenu").on('click', null, introClose);
+
+      intro.onchange(function(targetElement) {
+        switch(intro._currentStep) {
+          case 0:
+            closeMenu(true);
+            break;
+
+          case 1:
+            openMenu();
+            break;
+        }
+      });
+
+      // keep the menu visible. This is a hack, but I don't see a better way.
+      intro.onafterchange(function(targetElement) {
+        $("#feedbackSidebar").removeClass('introjs-fixParent');
+      });
+    }
+
+    intro.start();
+  }
+}
+
+// get the value of an option=value class applied to a slide
+function getSlideOption(option) {
+  var classes = currentSlide.attr('class').split(' ');
+
+  for (var i=0; i < classes.length; i++) {
+    var item = classes[i].split('=');
+    if(item.length == 2 && item[0] == option) {
+      return item[1]
+    }
+  }
+}
+
 function checkSlideParameter() {
 	if (slideParam = currentSlideFromParams()) {
 		slidenum = slideParam;
@@ -432,10 +745,24 @@ function currentSlideFromName(name) {
   var count = 0;
   if(name.length > 0 ) {
   	slides.each(function(s, slide) {
+      if (name == $(slide).attr("id") ) {
+        found = count;
+        return false;
+      }
   	  if (name == $(slide).find(".content").attr("ref") ) {
   	    found = count;
   	    return false;
   	  }
+      var dataSection = $(slide).attr("data-section").toLowerCase();
+      // firstText is usually a header for the slide
+      var firstText = $(slide).find(".content :first").text().replace(/[\W]+/g, '-').replace(/-+$/, '').toLowerCase();
+      var decodedName = decodeURIComponent(name).toLowerCase();
+      if (decodedName == dataSection+'/'+firstText
+          || name == dataSection
+          || decodedName == firstText  ) {
+        found = count;
+        return false;
+      }
   	  count++;
   	});
 	}
@@ -444,12 +771,13 @@ function currentSlideFromName(name) {
 
 function currentSlideFromParams() {
 	var result;
-	if (result = window.location.hash.match(/#([0-9]+)/)) {
-		return result[result.length - 1] - 1;
+	// Match numeric slide hashes: #241
+	if (result = window.location.hash.match(/^#([0-9]+)$/)) {
+		return result[1] - 1;
 	}
-	else {
-	  var hash = window.location.hash
-	  return currentSlideFromName(hash.substr(1, hash.length))
+	// Match slide, with optional internal mark: #slideName(+internal)
+	else if (result = window.location.hash.match(/^#([^+]+)\+?(.*)?$/)) {
+	  return currentSlideFromName(result[1]);
   }
 }
 
@@ -499,16 +827,18 @@ function showSlide(back_step, updatepv) {
     currentSlide.find('canvas.annotations').first().stopAnnotation();
   }
 
-	currentSlide = slides.eq(slidenum)
+  if(currentSlide) { currentSlide.removeClass('currentSlide') };
+  currentSlide = slides.eq(slidenum)
+  currentSlide.addClass('currentSlide');
 
-	var transition = currentSlide.attr('data-transition')
-	var fullPage = currentSlide.find(".content").is('.full-page');
+  var transition = currentSlide.attr('data-transition')
+  var fullPage = currentSlide.find(".content").is('.full-page');
 
-	if (back_step || fullPage) {
-		transition = 'none'
-	}
+  if (back_step || fullPage) {
+    transition = 'none'
+  }
 
-	$('#preso').cycle(slidenum, transition)
+  $('#preso').cycle(slidenum, transition)
 
 	if (fullPage) {
 		$('#preso').css({'width' : '100%', 'overflow' : 'visible'});
@@ -556,18 +886,31 @@ function showSlide(back_step, updatepv) {
     }
   }
 
-  // Update presenter view, if we spawned one
-	if (updatepv && 'presenterView' in window) {
+  // if we're a slave/display window
+  if('presenterView' in window) {
     var pv = window.presenterView;
-		pv.slidenum = slidenum;
-    pv.incrCurr = incrCurr
-    pv.incrSteps = incrSteps
-		pv.showSlide(true);
-		pv.postSlide();
 
-		pv.update();
+    // Update presenter view, if it's tracking us
+    if (updatepv) {
+      pv.slidenum  = slidenum;
+      pv.incrCurr  = incrCurr
+      pv.incrSteps = incrSteps
 
-	}
+      pv.showSlide(true);
+      pv.postSlide();
+      pv.update();
+    }
+
+    // if the slide is marked to autoplay videos, then fire them off!
+    if(currentSlide.hasClass('autoplay')) {
+      console.log('Autoplaying ' + currentSlide.attr('id'))
+      setTimeout(function(){
+        $(currentSlide).find('video').each(function() {
+          $(this).get(0).play();
+        });
+      }, 1000);
+    }
+  }
 
   // Update nav
   $('.highlighted').removeClass('highlighted');
@@ -582,6 +925,37 @@ function showSlide(back_step, updatepv) {
   // copy notes to the notes field for mobile.
   postSlide();
 
+  // is this an activity slide that has not yet been marked complete?
+  if (currentSlide.hasClass('activity')) {
+     if (currentSlide.find('input.activity').is(":checked")) {
+      activityIncomplete = false;
+      sendActivityStatus(true);
+    }
+    else {
+      activityIncomplete = true;
+      sendActivityStatus(false);
+    }
+  }
+  else {
+    activityIncomplete = false;
+  }
+
+  if(autoTour) {
+    if(currentSlide.hasClass('activity')) {
+      showTour('showoff:activity');
+    }
+    if(getSlideOption('form')) {
+      showTour('showoff:form');
+    }
+    var tour = getSlideOption('tour');
+    if(tour) {
+      showTour(tour);
+    }
+  }
+
+  // show the sync button if we're not on the same slide as the presenter
+  checkSyncState();
+
   // make all bigly text tremendous
   currentSlide.children('.content.bigtext').bigtext();
 
@@ -594,6 +968,16 @@ function showSlide(back_step, updatepv) {
 function getSlideProgress()
 {
 	return (slidenum + 1) + '/' + slideTotal
+}
+
+function getAllSections()
+{
+  memo = []
+  $("div.notes-section").each(function() {
+    section = $(this).attr('class').split(' ').filter(function(x) { return x != 'notes-section'; })[0];
+    if(! memo.includes(section)) { memo.push(section) }
+  });
+  return memo
 }
 
 function getCurrentSections()
@@ -660,6 +1044,17 @@ function showIncremental(incr)
 		}
 }
 
+// focus highlight requested lines of a given code block
+function highlightLines(block) {
+  block.innerHTML = block.innerHTML.split(/\r?\n/).map(function (line, i) {
+    if (line.indexOf('* ') === 0) {
+      return line.replace(/^\*(.*)$/, '<div class="highlightedLine">$1</div>');
+    }
+
+    return line;
+  }).join('\n');
+}
+
 // form handling
 function submitForm(form) {
   if(validateForm(form)) {
@@ -670,6 +1065,10 @@ function submitForm(form) {
       var submit = form.find("input[type=submit]")
       submit.attr("disabled", "disabled");
       submit.removeClass("dirty");
+
+      // stop blocking follow mode
+      activityIncomplete = false;
+      getPosition();
     });
   }
 }
@@ -698,7 +1097,19 @@ function validateForm(form) {
 function enableForm(element) {
   var submit = element.closest('form').find(':submit')
   submit.removeAttr("disabled");
-  submit.addClass("dirty")
+  submit.addClass("dirty");
+
+  // once a form is started, stop following the presenter
+  activityIncomplete = true;
+}
+
+function showFormAnswers(form) {
+  // If we have any correct options, find the parent element, then tag all descendants as incorrect
+  $('.slide.form\\='+form+' label.correct').parents('.form.element').find('label.response,option').addClass('incorrect');
+  // Then remove the double tag from the correct answers.
+  $('.slide.form\\='+form+' label.correct').removeClass('incorrect');
+  // finally, style the slide so we can see the effects
+  $('.slide.form\\='+form).addClass('answerkey')
 }
 
 function renderFormWatcher(element) {
@@ -853,14 +1264,11 @@ function renderForm(form) {
 function connectControlChannel() {
   if (interactive) {
     protocol     = (location.protocol === 'https:') ? 'wss://' : 'ws://';
-    ws           = new WebSocket(protocol + location.host + '/control');
+    path         = (location.root + '/control').replace('//', '/').replace('/presenter','');;
+    ws           = new WebSocket(protocol + location.host + path);
     ws.onopen    = function()  { connected();          };
     ws.onclose   = function()  { disconnected();       }
     ws.onmessage = function(m) { parseMessage(m.data); };
-  }
-  else {
-    ws = {}
-    ws.send = function() { /* no-op */ }
   }
 }
 
@@ -920,6 +1328,10 @@ function parseMessage(data) {
         follow(command["current"], command["increment"]);
         break;
 
+      case 'answerkey':
+        showFormAnswers(command["formID"]);
+        break;
+
       case 'complete':
         completeQuestion(command["questionID"]);
         break;
@@ -935,6 +1347,9 @@ function parseMessage(data) {
       case 'cancel':
         removeQuestion(command["questionID"]);
         break;
+
+      case 'activity':
+        updateActivityCompletion(command['count']);
 
       case 'annotation':
         invokeAnnotation(command["type"], command["x"], command["y"]);
@@ -1003,6 +1418,12 @@ function sendAnnotationConfig(setting, value) {
   }
 }
 
+function sendActivityStatus(status) {
+  if (ws.readyState == WebSocket.OPEN) {
+    ws.send(JSON.stringify({ message: 'activity', slide: slidenum, status: status }));
+  }
+}
+
 function invokeAnnotation(type, x, y) {
   switch (type) {
     case 'erase':
@@ -1024,18 +1445,24 @@ function feedbackActivity() {
   setTimeout(function() { $("#hamburger").removeClass('highlight') }, 75);
 }
 
-function track() {
+function track(current) {
   if (mode.track && ws.readyState == WebSocket.OPEN) {
-    var slideName    = $("#slideFilename").text();
-    var slideEndTime = new Date().getTime();
-    var elapsedTime  = slideEndTime - slideStartTime;
+    var slideName = $("#slideFilename").text() || $("#slideFile").text(); // yey for consistency
 
-    // reset the timer
-    slideStartTime = slideEndTime;
+    if(current) {
+      ws.send(JSON.stringify({ message: 'track', slide: slideName}));
+    }
+    else {
+      var slideEndTime = new Date().getTime();
+      var elapsedTime  = slideEndTime - slideStartTime;
 
-    if (elapsedTime > 1000) {
-      elapsedTime /= 1000;
-      ws.send(JSON.stringify({ message: 'track', slide: slideName, time: elapsedTime}));
+      // reset the timer
+      slideStartTime = slideEndTime;
+
+      if (elapsedTime > 1000) {
+        elapsedTime /= 1000;
+        ws.send(JSON.stringify({ message: 'track', slide: slideName, time: elapsedTime}));
+      }
     }
   }
 }
@@ -1047,8 +1474,10 @@ function editSlide() {
   window.open(link);
 }
 
-function follow(slide, newIncrement) {
-  if (mode.follow) {
+function follow(slide, newIncrement, force) {
+  presenterSlideNum = slide;
+
+  if ((mode.follow && ! activityIncomplete) || force) {
     var lastSlide = slidenum;
     console.log("New slide: " + slide);
     gotoSlide(slide);
@@ -1071,6 +1500,22 @@ function follow(slide, newIncrement) {
 
     }
   }
+
+  // show the sync button if we're not on the same slide as the presenter
+  checkSyncState();
+}
+
+function checkSyncState() {
+  if (presenterSlideNum != slidenum && presenterSlideNum != null) {
+    $("#synchronize").show();
+  }
+  else {
+    $("#synchronize").hide();
+  }
+}
+
+function synchronize() {
+  follow(presenterSlideNum, 0, true);
 }
 
 function getPosition() {
@@ -1099,6 +1544,11 @@ function increment() {
 
 function prevStep(updatepv)
 {
+  $(currentSlide).find('video').each(function() {
+    console.log('Pausing videos on ' + currentSlide.attr('id'))
+    $(this).get(0).pause();
+  });
+
   fireEvent("showoff:prev");
   track();
   slidenum--;
@@ -1107,6 +1557,11 @@ function prevStep(updatepv)
 
 function nextStep(updatepv)
 {
+  $(currentSlide).find('video').each(function() {
+    console.log('Pausing videos on ' + currentSlide.attr('id'))
+    $(this).get(0).pause();
+  });
+
   fireEvent("showoff:next");
   track();
 
@@ -1116,6 +1571,34 @@ function nextStep(updatepv)
   } else {
     increment();
   }
+}
+
+function prevSec(updatepv)
+{
+  $(currentSlide).find('video').each(function() {
+    console.log('Pausing videos on ' + currentSlide.attr('id'))
+    $(this).get(0).pause();
+  });
+
+  var curSec = currentSlide.attr('data-section');
+  var prevSec = $('li:has(a.navSection:contains('+curSec+'))')
+        .prev('li').find('ul li a:first').attr('rel');
+  gotoSlide(prevSec);
+  track();
+}
+
+function nextSec(updatepv)
+{
+  $(currentSlide).find('video').each(function() {
+    console.log('Pausing videos on ' + currentSlide.attr('id'))
+    $(this).get(0).pause();
+  });
+
+  var curSec = currentSlide.attr('data-section');
+  var nextSec = $('li:has(a.navSection:contains('+curSec+'))')
+        .next('li').find('ul li a:first').attr('rel');
+  gotoSlide(nextSec);
+  track();
 }
 
 // carrying on our grand tradition of overwriting functions of the same name with presenter.js
@@ -1131,6 +1614,9 @@ function postSlide() {
     }
 
 		$('#notes').html(notes);
+
+		// tell Showoff what slide we ended up on
+		track(true);
 	}
 }
 
@@ -1180,11 +1666,14 @@ function toggleFollow()
   mode.follow = ! mode.follow;
 
   if(mode.follow) {
-    $("#followMode").show().text('Follow Mode:');
+    $("#followMode").addClass('fa-check-circle');
+    $("#followMode").removeClass('fa-ban');
     getPosition();
   } else {
-    $("#followMode").hide();
+    $("#followMode").addClass('fa-ban');
+    $("#followMode").removeClass('fa-check-circle');
   }
+  showFooter();
 }
 
 function debug(data)
@@ -1216,7 +1705,9 @@ function keyDown(event){
   switch(getAction(event)) {
     case 'DEBUG':     toggleDebug();      break;
     case 'PREV':      prevStep();         break;
+    case 'PREVSEC':   prevSec();          break;
     case 'NEXT':      nextStep();         break;
+    case 'NEXTSEC':   nextSec();          break;
     case 'REFRESH':   reloadSlides();     break;
     case 'RELOAD':    reloadSlides(true); break;
     case 'CONTENTS':  toggleContents();   break;
@@ -1281,6 +1772,20 @@ function getKeyName (event) {
   return keyName;
 }
 
+function toggleComplete() {
+  if($(this).is(':checked')) {
+    activityIncomplete = false;
+    sendActivityStatus(true);
+    if(mode.follow) {
+      getPosition();
+    }
+  }
+  else {
+    activityIncomplete = true;
+    sendActivityStatus(false);
+  }
+}
+
 function toggleDebug () {
   debugMode = !debugMode;
   doDebugStuff();
@@ -1288,15 +1793,14 @@ function toggleDebug () {
 
 function reloadSlides (hard) {
   if(hard) {
-    var message = 'Are you sure you want to reload Showoff?';
+    var message = I18n.t('reload');
   }
   else {
-    var message = "Are you sure you want to refresh the slide content?\n\n";
-    message    += '(Use `RELOAD` to fully reload the entire UI)';
+    var message = I18n.t('refresh');
   }
 
   if (confirm(message)) {
-    loadSlides(loadSlidesBool, loadSlidesPrefix, true, hard);
+    loadSlides(loadSlidesBool, true, hard);
   }
 }
 
@@ -1304,8 +1808,22 @@ function toggleFooter() {
 	$('#footer').toggle()
 }
 
+function showFooter(timeout) {
+  timeout = (typeof timeout !== 'undefined') ?  timeout : 5000;
+
+  if($('#footer').is(':hidden')) {
+    $('#footer').show(200);
+
+    window.setTimeout(function() {
+      $('#footer').hide(200);
+    }, timeout);
+  }
+
+}
+
 function toggleHelp () {
-  $('#help').toggle();
+  var help = $("#help-modal");
+  help.dialog("isOpen") ? help.dialog("close") : help.dialog("open");
 }
 
 function toggleContents () {
@@ -1329,14 +1847,14 @@ var removeResults = function() {
   try { slaveWindow.removeResults() } catch (e) {};
 };
 
-var print = function(text) {
+var displayHUD = function(text) {
 	removeResults();
-	var _results = $('<div>').addClass('results').html('<pre>'+$.print(text, {max_string:1500})+'</pre>');
+	var _results = $('<div>').addClass('results').html('<pre>' + String(text).substring(0, 1500) + '</pre>');
 	$('body').append(_results);
 	_results.click(removeResults);
 
 	// if we're a presenter, mirror this on the display window
-  try { slaveWindow.print(text) } catch (e) {};
+  try { slaveWindow.displayHUD(text) } catch (e) {};
 };
 
 // Execute the first visible executable code block
@@ -1392,7 +1910,7 @@ function executeLocalCode(lang, codeDiv) {
   catch(e) {
     result = e.message;
   };
-  if (result != null) print(result);
+  if (result != null) displayHUD(result);
 }
 
 // request the server to execute a code block by path and index
@@ -1402,8 +1920,8 @@ function executeRemoteCode(lang, codeDiv) {
   var path  = slide.attr('ref');
 
   setExecutionSignal(true, codeDiv);
-  $.get('/execute/'+lang, {path: path, index: index}, function(result) {
-    if (result != null) print(result);
+  $.get('execute/'+lang, {path: path, index: index}, function(result) {
+    if (result != null) displayHUD(result);
     setExecutionSignal(false, codeDiv);
   });
 }
@@ -1457,7 +1975,7 @@ function togglePreShow() {
     }
 
   } else {
-    var seconds = parseFloat(prompt("Minutes from now to start") * 60);
+    var seconds = parseFloat(prompt(I18n.t('preshow.prompt')) * 60);
 
     try {
       slaveWindow.setupPreShow(seconds);
@@ -1480,11 +1998,11 @@ function setupPreShow(seconds) {
     $.each(data, function(i, n) {
       if(n == "preshow.json") {
         // has a descriptions file
-        $.getJSON("/file/_preshow/preshow.json", false, function(data) {
+        $.getJSON("file/_preshow/preshow.json", false, function(data) {
           preshow_des = data;
         })
       } else {
-        $('#preshow').append('<img ref="' + n + '" src="/file/_preshow/' + n + '"/>');
+        $('#preshow').append('<img ref="' + n + '" src="file/_preshow/' + n + '" class="preshow" />');
       }
     })
     preshow_images      = $('#preshow > img');
@@ -1516,7 +2034,7 @@ function startPreShow() {
 }
 
 function addPreShowTips(secondsLeft) {
-	$('#preshow_timer').text('Resuming in: ' + secondsToTime(secondsLeft));
+	$('#preshow_timer').text(I18n.t('preshow.resume') + ' ' + secondsToTime(secondsLeft));
 	var des = preshow_des && preshow_des[tmpImg.attr("ref")];
 	if(des) {
 		$('#tips').show();
@@ -1549,7 +2067,7 @@ function stopPreShow() {
 	$('#tips').remove();
 	$('#preshow_timer').remove();
 
-	loadSlides(loadSlidesBool, loadSlidesPrefix);
+	loadSlides(loadSlidesBool);
 }
 
 function nextPreShowImage() {
@@ -1581,17 +2099,55 @@ function togglePause() {
  Stats page
  ********************/
 
-function setupStats()
+function setupStats(data)
 {
   $("#stats div#all div.detail").hide();
   $("#stats div#all div.row").click(function() {
+      $(this).toggleClass('active');
       $(this).find("div.detail").slideToggle("fast");
   });
+
+  ['stray', 'idle'].forEach(function(stat){
+    var percent = data[stat+'_p'];
+    var selector = '#'+stat;
+
+    if(percent > 25) {
+      $(selector).show();
+      $(selector+' .label').text(percent+'%');
+    }
+    else {
+      $(selector).hide();
+    }
+  });
+
+  var location = window.location.pathname == 'presenter' ? '#' : '/#';
+  var viewers  = data['viewers'];
+  if (viewers) {
+    if (viewers.length == 1 && viewers[0][3] == 'current') {
+      $("#viewers").removeClass('zoomline');
+      $("#viewers").text(I18n.t('stats.allcurrent'));
+    }
+    else {
+      $("#viewers").zoomline({
+        max: data['viewmax'],
+        data: viewers,
+        click: function(element) { window.location = (location + element.attr("data-left")); }
+      });
+    }
+  }
+
+  if (data['elapsed']) {
+    $("#elapsed").zoomline({
+      max: data['maxtime'],
+      data: data['elapsed'],
+      click: function(element) { window.location = (location + element.attr("data-left")); }
+    });
+  }
 }
 
 /* Is this a mobile device? */
 function mobile() {
-  return ( $(window).width() <= 480 )
+  return ( $(window).width() <= 640 )
 }
 
 /* check browser support for one or more css properties */

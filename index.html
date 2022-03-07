@@ -9,53 +9,71 @@
 
   
 
-  <link rel="stylesheet" type="text/css" href=".//css/highlight/default.css"  />
-  <link rel="stylesheet" type="text/css" href=".//css/mermaid-6.0.0.css" />
-  <link rel="stylesheet" type="text/css" href=".//css/font-awesome-4.4.0/css/font-awesome.min.css">
-  <link rel="stylesheet" type="text/css" href=".//css/showoff.css?v=0.15.4" />
+  <link rel="stylesheet" type="text/css" href="css/highlight/default.css"  />
+  <link rel="stylesheet" type="text/css" href="css/mermaid-6.0.0.css" />
+  <link rel="stylesheet" type="text/css" href="css/font-awesome-5.6.1/css/all.min.css">
+  <link rel="stylesheet" type="text/css" href="css/introjs-2.5.local.css">
+  <link rel="stylesheet" type="text/css" href="css/jquery-ui-1.12.1.css">
+  <link rel="stylesheet" type="text/css" href="css/showoff.css?v=0.20.3" />
+  <link rel="stylesheet" type="text/css" href="css/zoomline-0.0.1.css">
 
-  <script type="text/javascript" src=".//js/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" src="js/jquery-2.1.4.min.js"></script>
+  <script type="text/javascript" src="js/jquery-ui-1.12.1.js"></script>
 
-  <script type="text/javascript" src=".//js/jquery.cycle.all-2.8.0.js"></script>
-  <script type="text/javascript" src=".//js/jquery-print.js"></script>
-  <script type="text/javascript" src=".//js/jquery.batchImageLoad-1.0.0.js"></script>
-  <script type="text/javascript" src=".//js/jquery.parsequery.min-6a20f83.js"></script>
-  <script type="text/javascript" src=".//js/jquery.doubletap-4ff02c5.js"></script>
-  <script type="text/javascript" src=".//js/jTypeWriter-1.1.js"></script>
-  <script type="text/javascript" src=".//js/bigtext-0.1.8.js"></script>
-  <script type="text/javascript" src=".//js/highlight.pack-9.2.0.js"></script>
-  <script type="text/javascript" src=".//js/mermaid-6.0.0-min.js"></script>
+  <script type="text/javascript" src="js/jquery.cycle.all-2.8.0.js"></script>
+  <script type="text/javascript" src="js/jquery.batchImageLoad-1.0.0.js"></script>
+  <script type="text/javascript" src="js/jquery.parsequery.min-6a20f83.js"></script>
+  <script type="text/javascript" src="js/jquery.doubletap-4ff02c5.js"></script>
+  <script type="text/javascript" src="js/highlight.pack-9.15.10.js"></script>
+  <script type="text/javascript" src="js/highlightjs-line-numbers.min.js"></script>
+  <script type="text/javascript" src="js/jTypeWriter-1.1.js"></script>
+  <script type="text/javascript" src="js/bigtext-0.1.8.js"></script>
+  <script type="text/javascript" src="js/zoomline-0.0.1.js"></script>
+  <script type="text/javascript" src="js/simpleStrings-0.0.1.js"></script>
+  <script type="text/javascript" src="js/mermaid-6.0.0-min.js"></script>
 
-  <script type="text/javascript" src=".//js/coffee-script-1.1.3-pre.js"></script>
+  <!-- waiting on https://github.com/usablica/intro.js/pull/727 -->
+  <script type="text/javascript" src="js/intro-2.5.local.js"></script>
 
-  <script type="text/javascript" src=".//js/annotations.js?v=0.15.4"></script>
-  <script type="text/javascript" src=".//js/showoff.js?v=0.15.4"></script>
+  <script type="text/javascript" src="js/coffee-script-1.1.3-pre.js"></script>
+
+  <script type="text/javascript" src="js/annotations.js?v=0.20.3"></script>
+  <script type="text/javascript" src="js/showoff.js?v=0.20.3"></script>
 
   
-    <link rel="stylesheet" href=".//file/pres.css" type="text/css"/>
+    <link rel="stylesheet" type="text/css" href="pres.css" />
   
 
   
-    <script type="text/javascript" src=".//file/pres.js"></script>
+    <script type="text/javascript" src="pres.js"></script>
   
 
   <script type="text/javascript">
     $(function(){
-      setupPreso(false, './');
+      setupPreso(false);
     });
 
     editUrl     = "";
     interactive = false;
+    master      = false;
+    presenter   = false;
 
     keymap               = {
-  "space": "NEXT",
   "d": "DEBUG",
-  "up": "PREV",
-  "left": "PREV",
-  "pageup": "PREV",
+  "space": "NEXT",
   "down": "NEXT",
   "right": "NEXT",
   "pagedown": "NEXT",
+  "up": "PREV",
+  "left": "PREV",
+  "pageup": "PREV",
+  "SPACE": "NEXTSEC",
+  "DOWN": "NEXTSEC",
+  "RIGHT": "NEXTSEC",
+  "PAGEDOWN": "NEXTSEC",
+  "UP": "PREVSEC",
+  "LEFT": "PREVSEC",
+  "PAGEUP": "PREVSEC",
   "R": "RELOAD",
   "r": "REFRESH",
   "c": "CONTENTS",
@@ -209,8 +227,19 @@
   "\\": "|",
   "`": "~",
   "=": "+",
-  "-": "_"
+  "-": "_",
+  "space": "SPACE",
+  "down": "DOWN",
+  "right": "RIGHT",
+  "pagedown": "PAGEDOWN",
+  "up": "UP",
+  "left": "LEFT",
+  "pageup": "PAGEUP"
 };
+    user_translations    = {
+};
+
+    I18n = new translation({"name":"Showoff Presentation","menu":{"title":"Showoff Menu","table_of_contents":"Table of Contents","downloads":"Downloads","feedback":{"label":"Send Feedback","description":"This slide is...","worst":"Terrible","best":"Awesome","why":"Why...?","send":"Send"},"pace":{"label":"The presenter should...","slower":"Slow Down","faster":"Speed Up"},"question":{"label":"Ask a Question","placeholder":"Ask a question..."},"edit":"Edit Current Slide","clear_annotations":"Clear Annotations","language":"Content Language","close":"Close","help":"Press <code>?</code> for help.","anonymous":"All features are anonymous.","sending":"Sending..."},"navigation":{"next":"Next","previous":"Previous","sync":"Sync Presentation"},"loading":"loading presentation...","activity_complete":"Activity complete","follow":{"label":"Follow Mode:"},"refresh":"Are you sure you want to refresh the slide content?\n\n(Use `RELOAD` to fully reload the entire UI)","reload":"Are you sure you want to reload Showoff?","preshow":{"prompt":"Minutes from now to start?","resume":"Resuming in:"},"tour":{"show":"See the Tour","reset":"Reset Hints","welcome":"<h3>Welcome to Showoff</h3>Let me show you around. After you finish this tour, it won't show again.","displayview":"Start by clicking this button to open the Display Window; then drag it onto the projector.","annotations":"Draw on your slides everywhere the presentation is displayed.","timer":"Set a countdown timer to help you stay on pace.","pace":"Audience members can use this to tell you if you're moving too quickly. Try to keep the indicator centered.","questions":"Questions asked by audience members are displayed here. You'll also see a count indicator on the Display Window when you have questions to answer.","notes":"Configure the notes display by zooming text, resizing the pane, or even popping it out into a new window.","slidesource":"The name of the slide is displayed here.","settings":"Would you like a different presenter layout? Choose that and other settings here.","edit":"This button will open your web-based editor--usually something like GitHub.","report":"Don't forget to report issues when you see them.","activity":{"count":"This will count down as audience members mark their activity complete. Their presentations will pause until completed.","complete":"Check this box when you're ready to move on. The presentation will pause while you're working."},"form":{"responses":"As questions are answered, they'll show up as a bar chart with the number of answers to each question on the right.","display":"Press this button to present a snapshot of the live responses on slide.","save":"Press this button to save your responses. The presentation will pause while answering."},"menu":{"start":"Click here to open the menu.","navigation":"Quickly navigate to any slide.","download":"Download presentation support files.","pace":"Provide pace feedback.","questions":"Ask live questions of the presenter.","feedback":"Provide suggestions for improving the content."}},"downloads":{"title":"File Downloads"},"help":{"title":"Help","next":"Move to the next slide.","prev":"Move to the previous slide.","nextsec":"Move to the next section.","prevsec":"Move to the previous section.","contents":"Show the table of contents menu.","follow":"Toggle follow mode.","help":"Show this help dialog.","refresh":"Refresh slide content.","reload":"Completely reload Showoff.","blank":"Blank the screen.","footer":"Toggle the display footer.","notes":"Toggle notes display.","clear":"Clear code execution results.","pause":"Pause the presentation.","preshow":"Display slideshow of <tt>preshow</tt> images on a timer.","execute":"Execute the first visible code block.","debug":"Show debugging information.","close":"Close"},"stats":{"title":"Viewing Statistics","stray":"of your audience is not viewing the same slide you are.","idle":"of your audience is idle.","current":"Slides currently being viewed","elapsed":"Elapsed time spent on each slide","nodata":"No data to display.","allcurrent":"All audience members are viewing the presenter's slide."},"forms":{"display":"Display Results","save":"Save"},"presenter":{"topbar":{"annotations":"Annotations","edit":"Edit Slide","report":"Report Issue With Slide","stats":"Viewing Statistics","downloads":"Downloads","display":"Display Window","print":"Print Slides","settings":"Settings","newpage":"Open in a new page...","tooltip":{"annotations":"Enable the annotations subsystem.","edit":"Edit current slide in new window.","report":"Report an issue with the current slide.","stats":"See the slides your audience is interacting with.","downloads":"Open the file downloads in a menu or new page.","display":"Enable the Display Window; you should put this on the projector.","print":"Print slides using a new window.","settings":"Open the Settings dialog."}},"preview":{"next":"Next","previous":"Previous"},"mobile":{"update":"Update"},"notes":{"label":"Showoff Notes","personal":"Personal Notes"},"timer":{"label":"Timer:","start":"Start","pause":"Pause","resume":"Resume","cancel":"Cancel","unit":"minutes"},"pace":{"faster":"Speed Up!","slower":"Slow Down!"},"questions":"Audience Questions","annotation":{"tools":"Tools","lines":"Lines","shapes":"Shapes"},"status":{"label":"Slides:"},"settings":{"label":"Settings","close":"Close","follower":{"label":"Update Follower","tooltip":"Send slide change notifications.","description":"When this is enabled, the Showoff server will track your slide changes. Disable it to observe the presentation without inadvertently causing slide changes."},"remote":{"label":"Enable Remote","tooltip":"Enables tracking of other presenters.","description":"When this is enabled, you can load the presenter in another browser (typically on your mobile phone) to control the presentation."},"layout":{"label":"Layout","default":"Default Layout","thumbs":"Display thumbnail previews of the next and previous slides.","beside":"Display the next slide as a large preview in the main presenter view.","floating":"Open the next slide as a floating window.","confirmation":"Browser security requires confirmation before opening a new window.","open":"Open Window","cancel":"cancel","reset":{"label":"Clear Showoff settings.","tooltip":"Reset Showoff UI settings to default values."}},"language":{"label":"Content Language","tooltip":"Select from available translations, or autoselect based on your browser settings.","description":"This presentation is available in different languages. Choose the language you would like to view or leave it at <tt>automatic</tt> to use your browser settings."}},"print":{"label":"Choose type of printed notes","description":"Select the content you'd like to show under the slides.","none":"Don't include notes","notes":"Presenter Notes","handouts":"Audience Handouts"}},"language":{"auto":"Automatic","disable":"Disable Translations"},"error":{"file_not_found":"File Not Found!"}});
 
   </script>
 
@@ -221,8 +250,9 @@
 
 <i id="hamburger" class="fa fa-bars fa-2x"></i>
 <div id="sidebarWrapper">
+    <div id="navigationHover"></div>
     <div id="feedbackSidebar" class="sideMenu">
-    <img id="disconnected" src=".//css/disconnected.png">
+    <img id="disconnected" src="css/disconnected.png">
     <h3>Showoff Menu</h3>
     <div id="navToggle" class="buttonWrapper"><i class=" fa fa-bookmark"></i> Table of Contents</div>
     <div id="navigation" class="submenu"></div>
@@ -231,116 +261,129 @@
 
     
 
+    
+
     <div id="closeMenu" class="buttonWrapper"><i class="fa fa-close"></i> Close</div>
     <hr>
 
     <small>
         <p>Press <code>?</code> for help.</p>
-        <p>All features are anonymous</p>
+        <p>All features are anonymous.</p>
     </small>
     </div>
     <div id="sidebarExit"></div>
 </div>
-<div id="help">
-  <h1>Showoff Hotkeys</h1>
-  <div>
-    <span class="description">Move to the next slide.</span>
-    <span class="action">NEXT</span>
-    <span class="hotkeys"><span class="key">space</span><span class="key">down</span><span class="key">right</span><span class="key">pagedown</span></span>
-  </div>
-  <div>
-    <span class="description">Move to the previous slide.</span>
-    <span class="action">PREV</span>
-    <span class="hotkeys"><span class="key">up</span><span class="key">left</span><span class="key">pageup</span></span>
-  </div>
-  <div>
-    <span class="description">Show the table of contents menu.</span>
-    <span class="action">CONTENTS</span>
-    <span class="hotkeys"><span class="key">c</span><span class="key">t</span></span>
-  </div>
-  <div>
-    <span class="description">Toggle follow mode.</span>
-    <span class="action">FOLLOW</span>
-    <span class="hotkeys"><span class="key">f</span></span>
-  </div>
-  <div>
-    <span class="description">Show this help dialog.</span>
-    <span class="action">HELP</span>
-    <span class="hotkeys"><span class="key">h</span><span class="key">/</span><span class="key">?</span></span>
-  </div>
+<div id="help-modal" title="Help">
+  <div id="help">
+    <div>
+      <span class="description">Move to the next slide.</span>
+      <span class="action">NEXT</span>
+      <span class="hotkeys"><span class="key">space</span><span class="key">down</span><span class="key">right</span><span class="key">pagedown</span></span>
+    </div>
+    <div>
+      <span class="description">Move to the previous slide.</span>
+      <span class="action">PREV</span>
+      <span class="hotkeys"><span class="key">up</span><span class="key">left</span><span class="key">pageup</span></span>
+    </div>
+    <div>
+      <span class="description">Move to the next section.</span>
+      <span class="action">NEXTSEC</span>
+      <span class="hotkeys"><span class="key">SPACE</span><span class="key">DOWN</span><span class="key">RIGHT</span><span class="key">PAGEDOWN</span></span>
+    </div>
+    <div>
+      <span class="description">Move to the previous section.</span>
+      <span class="action">PREVSEC</span>
+      <span class="hotkeys"><span class="key">UP</span><span class="key">LEFT</span><span class="key">PAGEUP</span></span>
+    </div>
+    <div>
+      <span class="description">Show the table of contents menu.</span>
+      <span class="action">CONTENTS</span>
+      <span class="hotkeys"><span class="key">c</span><span class="key">t</span></span>
+    </div>
+    <div>
+      <span class="description">Toggle follow mode.</span>
+      <span class="action">FOLLOW</span>
+      <span class="hotkeys"><span class="key">f</span></span>
+    </div>
+    <div>
+      <span class="description">Show this help dialog.</span>
+      <span class="action">HELP</span>
+      <span class="hotkeys"><span class="key">h</span><span class="key">/</span><span class="key">?</span></span>
+    </div>
 
-  <hr />
+    <hr />
 
-  <div>
-    <span class="description">Refresh slide content.</span>
-    <span class="action">REFRESH</span>
-    <span class="hotkeys"><span class="key">r</span></span>
-  </div>
-  <div>
-    <span class="description">Completely reload Showoff.</span>
-    <span class="action">RELOAD</span>
-    <span class="hotkeys"><span class="key">R</span></span>
-  </div>
-  <div>
-    <span class="description">Blank the screen.</span>
-    <span class="action">BLANK</span>
-    <span class="hotkeys"><span class="key">b</span><span class="key">.</span></span>
-  </div>
-  <div>
-    <span class="description">Toggle the display footer.</span>
-    <span class="action">FOOTER</span>
-    <span class="hotkeys"><span class="key">F</span></span>
-  </div>
-  <div>
-    <span class="description">Toggle notes display.</span>
-    <span class="action">NOTES</span>
-    <span class="hotkeys"><span class="key">n</span></span>
-  </div>
-  <div>
-    <span class="description">Clear code execution results.</span>
-    <span class="action">CLEAR</span>
-    <span class="hotkeys"><span class="key">esc</span></span>
-  </div>
-  <div>
-    <span class="description">Pause the presentation.</span>
-    <span class="action">PAUSE</span>
-    <span class="hotkeys"><span class="key">p</span></span>
-  </div>
-  <div>
-    <span class="description">Display slideshow of <tt>preshow</tt> images on a timer.</span>
-    <span class="action">PRESHOW</span>
-    <span class="hotkeys"><span class="key">P</span></span>
-  </div>
-  <div>
-    <span class="description">Execute the first visible code block.</span>
-    <span class="action">EXECUTE</span>
-    <span class="hotkeys"><span class="key">x</span><span class="key">f5</span></span>
-  </div>
+    <div>
+      <span class="description">Refresh slide content.</span>
+      <span class="action">REFRESH</span>
+      <span class="hotkeys"><span class="key">r</span></span>
+    </div>
+    <div>
+      <span class="description">Completely reload Showoff.</span>
+      <span class="action">RELOAD</span>
+      <span class="hotkeys"><span class="key">R</span></span>
+    </div>
+    <div>
+      <span class="description">Blank the screen.</span>
+      <span class="action">BLANK</span>
+      <span class="hotkeys"><span class="key">b</span><span class="key">.</span></span>
+    </div>
+    <div>
+      <span class="description">Toggle the display footer.</span>
+      <span class="action">FOOTER</span>
+      <span class="hotkeys"><span class="key">F</span></span>
+    </div>
+    <div>
+      <span class="description">Toggle notes display.</span>
+      <span class="action">NOTES</span>
+      <span class="hotkeys"><span class="key">n</span></span>
+    </div>
+    <div>
+      <span class="description">Clear code execution results.</span>
+      <span class="action">CLEAR</span>
+      <span class="hotkeys"><span class="key">esc</span></span>
+    </div>
+    <div>
+      <span class="description">Pause the presentation.</span>
+      <span class="action">PAUSE</span>
+      <span class="hotkeys"><span class="key">p</span></span>
+    </div>
+    <div>
+      <span class="description">Display slideshow of <tt>preshow</tt> images on a timer.</span>
+      <span class="action">PRESHOW</span>
+      <span class="hotkeys"><span class="key">P</span></span>
+    </div>
+    <div>
+      <span class="description">Execute the first visible code block.</span>
+      <span class="action">EXECUTE</span>
+      <span class="hotkeys"><span class="key">x</span><span class="key">f5</span></span>
+    </div>
 
-  <hr />
+    <hr />
 
-  <div>
-    <span class="description">Show debugging information.</span>
-    <span class="action">DEBUG</span>
-    <span class="hotkeys"><span class="key">d</span></span>
+    <div>
+      <span class="description">Show debugging information.</span>
+      <span class="action">DEBUG</span>
+      <span class="hotkeys"><span class="key">d</span></span>
+    </div>
   </div>
 </div>
 
 <div id="preso"><center>loading presentation...</center></div>
-
+<a id="synchronize"><i class="fa fa-link" aria-hidden="true" href="#"></i> Sync Presentation</a>
 <div id="notes"></div>
 
 <footer id="footer">
-  <span id="followMode"></span>
-  <span id="slideInfo"></span>
-  <span id="debugInfo"></span>
-  <span id="notesInfo"></span>
-  <span id="slideFilename"></span>
-  <img id="disconnected" src=".//css/disconnected.png" />
+  <span id="followLabel" class="container">Follow Mode: <i id="followMode" class="fa fa-ban" aria-hidden="true"></i></span>
+  <span id="slideInfo" class="container"></span>
+  <span id="debugInfo" class="container"></span>
+  <span id="notesInfo" class="container"></span>
+  <span id="slideFilename" class="container"></span>
+  <img id="disconnected" src="css/disconnected.png" />
 </footer>
 
 <div id="slides" class="offscreen" style="display:none;">
-<div id="intro_01_title" class="slide center" data-transition="none">
+<div data-section="intro" data-title="01_title" id="intro_01_title" class="slide center" data-transition="none">
 <div class="content center" ref="intro/01_title">
 
 <h1 id="h-section">_</h1>
@@ -350,7 +393,7 @@
 </div>
 <canvas class="annotations"></canvas>
 </div>
-<div id="intro_02_follow_along" class="slide" data-transition="none">
+<div data-section="intro" data-title="02_follow_along" id="intro_02_follow_along" class="slide" data-transition="none">
 <div class="content " ref="intro/02_follow_along">
 <h1 id="h-follow-along">Follow along:</h1>
 
@@ -369,7 +412,7 @@ This presentation in written with <a href="https://github.com/puppetlabs/showoff
 </div>
 <canvas class="annotations"></canvas>
 </div>
-<div id="intro_03_about_me" class="slide bullets" data-transition="none">
+<div data-section="intro" data-title="03_about_me" id="intro_03_about_me" class="slide bullets" data-transition="none">
 <div class="content bullets" ref="intro/03_about_me">
 <h1 id="h-about-me">About Me</h1>
 
@@ -377,14 +420,14 @@ This presentation in written with <a href="https://github.com/puppetlabs/showoff
   <li>Matt Moretti</li>
   <li>mmoretti@umass.edu</li>
   <li>
-<i class="fa fa-github-square"></i>   <a href="https://github.com/werebus" target="_blank">@werebus</a>
+<i class="fab fa-github-square"></i>   <a href="https://github.com/werebus" target="_blank">@werebus</a>
 </li>
 </ul>
 
 </div>
 <canvas class="annotations"></canvas>
 </div>
-<div id="intro_04_overview" class="slide bullets" data-transition="none">
+<div data-section="intro" data-title="04_overview" id="intro_04_overview" class="slide bullets" data-transition="none">
 <div class="content bullets" ref="intro/04_overview">
 
 <h1 id="h-overview">Overview</h1>
@@ -400,7 +443,7 @@ This presentation in written with <a href="https://github.com/puppetlabs/showoff
 </p></div>
 <canvas class="annotations"></canvas>
 </div>
-<div id="conclusion_01_questions" class="slide" data-transition="none">
+<div data-section="conclusion" data-title="01_questions" id="conclusion_01_questions" class="slide" data-transition="none">
 <div class="content " ref="conclusion/01_questions">
 <h1 id="h-questions">Questions?</h1>
 
@@ -414,6 +457,60 @@ This presentation in written with <a href="https://github.com/puppetlabs/showoff
 <div id="pauseScreen">
   PAUSED
 </div>
+
+  <script defer type="text/javascript">
+    // We want the audience members to see automatic tours. We can assume that they won't be
+    // using many server domains like the presenter might.
+    var autoTour = true;
+
+    $( document ).ready(function() {
+      if(presenter && !window.opener) {
+        alert('This is an audience view designed for interactivity. If you are placing this window on a projector, you should use the Display View instead.');
+      }
+
+      tours['showoff:activity'] = [
+        {
+          element: ".currentSlide .activityToggle",
+          intro: I18n.t('tour.activity.complete')
+        }
+      ];
+
+      tours['showoff:form'] = [
+        {
+          element: ".currentSlide input.save",
+          intro: I18n.t('tour.form.save')
+        }
+      ];
+
+      tours['showoff:menu'] = [
+        {
+          element: "#hamburger",
+          intro: I18n.t('tour.menu.start')
+        },
+        {
+          element: "#navToggle",
+          intro: I18n.t('tour.menu.navigation')
+        },
+        {
+          element: "#fileDownloads",
+          intro: I18n.t('tour.menu.download')
+        },
+        {
+          element: "#paceFaster",
+          intro: I18n.t('tour.menu.pace')
+        },
+        {
+          element: "#questionToggle",
+          intro: I18n.t('tour.menu.questions')
+        },
+        {
+          element: "#feedbackToggle",
+          intro: I18n.t('tour.menu.feedback')
+        }
+      ].filter(function(item) { return (document.querySelector(item['element'])) });
+      // display tips for only the enabled features
+    });
+  </script>
 
 </body>
 </html>
