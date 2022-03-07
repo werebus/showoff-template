@@ -4,7 +4,7 @@ require 'erubis'
 
 showoff_json = JSON.parse(File.read('showoff.json'))
 sections = showoff_json['sections'].map { |s| s.values.first }
-other_dirs = ['_preshow']
+other_dirs = %w[_files _images _preshow]
 preso_dirs = (sections + other_dirs).sort
 
 template = Erubis::Eruby.new(DATA.read)
