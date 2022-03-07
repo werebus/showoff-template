@@ -1,4 +1,4 @@
-@import url('/file/vendor/pico-css/css/pico.min.css');
+@import url('https://unpkg.com/@picocss/pico@1.4.4/css/pico.min.css');
 
 :root {
   --primary-h: 0;
