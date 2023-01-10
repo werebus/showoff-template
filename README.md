@@ -42,28 +42,12 @@ $ bundle exec showoff github
 $ git push origin gh-pages
 ```
 
-Running on Heroku
------------------
-Assuming that you have a [heroku][heroku] account and are logged-in to
-the cli, you just need to create an app and push.
-
-```bash
-$ heroku create
-$ git push heroku
-```
 
 Password-protected presenter view
 ---------------------------------
 If you'd like to put a password in front of the presenter view, just
-sent the environment variable, `PASSWORD`. On Heroku, that's done like
-so:
-
-```bash
-$ heroku config:set PASSWORD=somepassword
-```
-
-but any method of setting an environment variable will do the trick.
-Locally, that can be as simple as
+sent the environment variable, `PASSWORD`. Any method of setting an environment
+variable will do the trick. Locally, that can be as simple as:
 
 ```bash
 $ PASSWORD=somepassword bundle exec rackup
