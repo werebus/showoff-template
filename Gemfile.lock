@@ -3,8 +3,8 @@ GEM
   specs:
     addressable (2.8.1)
       public_suffix (>= 2.0.2, < 6.0)
-    commonmarker (0.23.6)
-    concurrent-ruby (1.1.10)
+    commonmarker (0.23.8)
+    concurrent-ruby (1.2.0)
     daemons (1.4.1)
     em-websocket (0.3.8)
       addressable (>= 2.1.1)
@@ -24,18 +24,18 @@ GEM
     mini_portile2 (2.8.1)
     mustermann (2.0.2)
       ruby2_keywords (~> 0.0.1)
-    nokogiri (1.13.10)
+    nokogiri (1.14.1)
       mini_portile2 (~> 2.8.0)
       racc (~> 1.4)
     parslet (2.0.0)
     public_suffix (5.0.1)
     racc (1.6.2)
-    rack (2.2.5)
+    rack (2.2.6.2)
     rack-contrib (2.3.0)
       rack (~> 2.0)
     rack-protection (2.2.4)
       rack
-    redcarpet (3.5.1)
+    redcarpet (3.6.0)
     rexml (3.2.5)
     ruby-dbus (0.14.1)
     ruby2_keywords (0.0.5)
@@ -79,7 +79,7 @@ DEPENDENCIES
   thin
 
 RUBY VERSION
-   ruby 3.1.2p20
+   ruby 3.2.0p0
 
 BUNDLED WITH
-   2.3.25
+   2.4.6
