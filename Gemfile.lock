@@ -21,15 +21,15 @@ GEM
     json (2.6.3)
     kramdown (2.4.0)
       rexml
-    mini_portile2 (2.8.1)
+    mini_portile2 (2.8.5)
     mustermann (2.0.2)
       ruby2_keywords (~> 0.0.1)
-    nokogiri (1.14.3)
-      mini_portile2 (~> 2.8.0)
+    nokogiri (1.16.2)
+      mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
     parslet (2.0.0)
     public_suffix (5.0.1)
-    racc (1.6.2)
+    racc (1.7.3)
     rack (2.2.7)
     rack-contrib (2.3.0)
       rack (~> 2.0)
@@ -79,7 +79,7 @@ DEPENDENCIES
   thin
 
 RUBY VERSION
-   ruby 3.2.2p53
+   ruby 3.2.3p157
 
 BUNDLED WITH
-   2.4.12
+   2.5.6
